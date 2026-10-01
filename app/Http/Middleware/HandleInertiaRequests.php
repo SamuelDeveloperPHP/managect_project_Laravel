@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -29,10 +30,15 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user()?->only('id', 'name', 'email', 'role', 'permissions'),
+                'user' => $user ? [
+                    ...$user->only('id', 'name', 'email', 'role', 'permissions', 'email_verified_at'),
+                    'profile_photo_url' => $user->profile_photo_path ? Storage::disk('public')->url($user->profile_photo_path) : null,
+                ] : null,
                 'company' => ($request->attributes->get('current_company') ?? $request->user()?->company)?->only('id', 'name'),
                 'selected_company_id' => $request->session()->get('master_company_id'),
             ],

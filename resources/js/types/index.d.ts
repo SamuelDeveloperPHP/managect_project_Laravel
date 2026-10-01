@@ -5,6 +5,7 @@ export interface User {
     role?: 'master' | 'admin' | 'user';
     permissions?: Record<string, boolean>;
     email_verified_at?: string;
+    profile_photo_url?: string | null;
 }
 
 export interface Company {
