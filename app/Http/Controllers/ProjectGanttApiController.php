@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GanttTask;
 use App\Models\Project;
+use App\Models\ProjectBacklogItem;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +44,7 @@ class ProjectGanttApiController extends Controller
             'tasks.*.end' => ['required', 'numeric', 'min:0'],
             'tasks.*.duration' => ['nullable', 'integer', 'between:1,3650'],
             'tasks.*.depends' => ['nullable', 'string', 'max:255'],
+            'tasks.*.backlogItemId' => ['nullable', 'integer'],
             'tasks.*.collapsed' => ['nullable', 'boolean'],
             'tasks.*.startIsMilestone' => ['nullable', 'boolean'],
             'tasks.*.endIsMilestone' => ['nullable', 'boolean'],
@@ -57,6 +59,11 @@ class ProjectGanttApiController extends Controller
 
         $tasks = array_values($validator->validated()['tasks']);
         $companyId = (int) $project->company_id;
+        $backlogItemIds = collect($tasks)->pluck('backlogItemId')->filter()->map(fn ($id) => (int) $id)->unique();
+        $validBacklogItemIds = ProjectBacklogItem::query()->where('project_id', $project->id)->whereIn('id', $backlogItemIds)->pluck('id')->map(fn ($id) => (int) $id);
+        if ($backlogItemIds->diff($validBacklogItemIds)->isNotEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Um item de backlog vinculado não pertence a este projeto.'], 422);
+        }
         $existing = GanttTask::query()->where('project_id', $project->id)->get()->keyBy('id');
         $activeUsers = User::query()->where('company_id', $companyId)->where('is_active', true)
             ->whereIn('id', collect($tasks)->flatMap(fn (array $task) => collect($task['assigs'] ?? [])->pluck('resourceId'))->unique())
@@ -64,6 +71,17 @@ class ProjectGanttApiController extends Controller
 
         try {
             $prepared = $this->prepareTasks($tasks, $activeUsers);
+            foreach ($prepared as $index => $task) {
+                $taskId = (int) ($task['id'] ?? 0);
+                $backlogItemId = array_key_exists('backlogItemId', $task)
+                    ? $task['backlogItemId']
+                    : $existing->get($taskId)?->project_backlog_item_id;
+                $hasChildren = isset($prepared[$index + 1]) && (int) $prepared[$index + 1]['level'] > (int) $task['level'];
+                if ($backlogItemId && $hasChildren) {
+                    return response()->json(['success' => false, 'message' => 'Uma tarefa vinculada ao backlog não pode se tornar tarefa-pai. Ajuste o vínculo antes de alterar a hierarquia.'], 422);
+                }
+            }
+
             DB::transaction(function () use ($prepared, $existing, $project, $companyId, $request): void {
                 $retainedIds = [];
                 foreach ($prepared as $index => $task) {
@@ -92,6 +110,9 @@ class ProjectGanttApiController extends Controller
                         'end_is_milestone' => (bool) ($task['endIsMilestone'] ?? false),
                         'updated_by' => $request->user()->id,
                     ]);
+                    if (array_key_exists('backlogItemId', $task)) {
+                        $record->project_backlog_item_id = $task['backlogItemId'] ? (int) $task['backlogItemId'] : null;
+                    }
                     if (! $taskId) $record->created_by = $request->user()->id;
                     $record->save();
                     $retainedIds[] = $record->id;
@@ -166,6 +187,7 @@ class ProjectGanttApiController extends Controller
             'typeId' => '',
             'description' => $task->description ?? '',
             'code' => $task->code ?? '',
+            'backlogItemId' => $task->project_backlog_item_id ? (int) $task->project_backlog_item_id : null,
             'level' => (int) $task->level,
             'status' => $task->status,
             'color' => '#3aaf85',

@@ -7,6 +7,7 @@ use App\Models\Concerns\AuditsChanges;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProjectBacklogItem extends Model
 {
@@ -31,5 +32,10 @@ class ProjectBacklogItem extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function ganttTasks(): HasMany
+    {
+        return $this->hasMany(GanttTask::class, 'project_backlog_item_id');
     }
 }

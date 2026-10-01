@@ -43,6 +43,7 @@ Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(func
     Route::get('/projects/{project}/overview', [ProjectOverviewController::class, 'show'])->name('projects.overview');
     Route::post('/projects/{project}/backlog', [ProjectBacklogController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.backlog.store');
     Route::patch('/projects/{project}/backlog/{item}/status', [ProjectBacklogController::class, 'updateStatus'])->middleware('permission:can_manage_projects')->name('projects.backlog.status');
+    Route::put('/projects/{project}/backlog/{item}/gantt-tasks', [ProjectBacklogController::class, 'syncGanttTasks'])->middleware('permission:can_manage_projects')->name('projects.backlog.gantt-tasks.sync');
     Route::get('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'show'])->name('projects.gantt.show');
     Route::post('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'save'])->middleware('permission:can_manage_projects')->name('projects.gantt.save');
 });
