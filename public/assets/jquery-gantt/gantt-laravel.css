@@ -1,0 +1,48 @@
+.gantt-screen #workSpace {
+  height: auto !important;
+  min-height: 0;
+  flex: 1 1 0%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #fff;
+}
+
+#gantt-toast.gantt-status-bar {
+  position: absolute;
+  z-index: 20;
+  top: 62px;
+  left: 16px;
+  max-width: min(560px, calc(100vw - 32px));
+  display: none;
+  min-height: 0;
+  padding: 10px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#gantt-toast.gantt-status-bar.success,
+#gantt-toast.gantt-status-bar.info {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+#gantt-toast.gantt-status-bar.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+#workSpace .ganttButtonBar {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+@media (max-width: 640px) {
+  #gantt-toast.gantt-status-bar { top: 60px; left: 10px; }
+}

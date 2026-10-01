@@ -7,7 +7,10 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\GanttTaskController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectBacklogController;
+use App\Http\Controllers\ProjectGanttApiController;
+use App\Http\Controllers\ProjectOverviewController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReleaseVersionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -37,8 +40,11 @@ Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(func
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.store');
     Route::get('/projects/{project}/backlog', [ProjectBacklogController::class, 'index'])->name('projects.backlog.index');
     Route::get('/projects/{project}/timeline', [GanttTaskController::class, 'index'])->name('projects.timeline.index');
+    Route::get('/projects/{project}/overview', [ProjectOverviewController::class, 'show'])->name('projects.overview');
     Route::post('/projects/{project}/backlog', [ProjectBacklogController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.backlog.store');
     Route::patch('/projects/{project}/backlog/{item}/status', [ProjectBacklogController::class, 'updateStatus'])->middleware('permission:can_manage_projects')->name('projects.backlog.status');
+    Route::get('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'show'])->name('projects.gantt.show');
+    Route::post('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'save'])->middleware('permission:can_manage_projects')->name('projects.gantt.save');
 });
 
 Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role:admin,master', 'throttle:authenticated-web'])->group(function () {
@@ -52,6 +58,7 @@ Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role
     Route::put('/users/{user}', [CompanyAccessController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/status', [CompanyAccessController::class, 'setActive'])->name('users.status');
     Route::get('/audit', [CompanyAccessController::class, 'audit'])->name('audit.index');
+    Route::get('/versions', [ReleaseVersionController::class, 'index'])->name('versions.index');
 });
 
 require __DIR__.'/auth.php';
