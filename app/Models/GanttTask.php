@@ -12,7 +12,7 @@ class GanttTask extends Model
     use BelongsToCompany;
 
     protected $fillable = [
-        'phalcon_id', 'company_id', 'project_id', 'code', 'name', 'description', 'level', 'status', 'progress',
+        'phalcon_id', 'company_id', 'project_id', 'project_backlog_item_id', 'code', 'name', 'description', 'level', 'status', 'progress',
         'start_at', 'end_at', 'duration', 'depends', 'sort_order', 'collapsed', 'start_is_milestone',
         'end_is_milestone', 'created_by', 'updated_by',
     ];
@@ -28,6 +28,11 @@ class GanttTask extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function backlogItem(): BelongsTo
+    {
+        return $this->belongsTo(ProjectBacklogItem::class, 'project_backlog_item_id');
     }
 
     public function assignments(): HasMany

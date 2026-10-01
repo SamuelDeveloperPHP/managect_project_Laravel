@@ -1,10 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Fragment, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 
 type Project = { id: number; name: string; code: string; status: string; client: string | null; start_date: string | null; deadline: string | null };
 type ScheduleTask = { id: number; code: string | null; name: string; description: string | null; status: string; progress: number; end_at: string };
-type BacklogItem = { id: number; code: string; epic: string; title: string; description: string | null; priority: string; status: string; release: string | null; points: number | null };
+type LinkedTask = { id: number; code: string | null; name: string; status: string; progress: number };
+type BacklogItem = { id: number; code: string; epic: string; title: string; description: string | null; priority: string; status: string; release: string | null; points: number | null; gantt_tasks: LinkedTask[] };
+type GanttTaskOption = { id: number; code: string | null; name: string; backlog_item_id: number | null };
 type Phase = { code: string; name: string; total: number; done: number; progress: number };
 type Summary = { total: number; completed: number; progress: number; late: number; due_soon: number; status_counts: Record<string, number>; status_labels: Record<string, string>; phases: Phase[]; upcoming: ScheduleTask[]; starts_at: string | null; ends_at: string | null };
 
@@ -21,13 +24,26 @@ function Metric({ label, value, detail, tone = 'text-slate-950' }: { label: stri
     return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm font-medium text-slate-500">{label}</p><p className={`mt-2 text-3xl font-semibold tracking-tight ${tone}`}>{value}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></article>;
 }
 
-export default function Overview({ project, summary, backlogItems }: { project: Project; summary: Summary; backlogItems: BacklogItem[] }) {
+export default function Overview({ project, summary, backlogItems, ganttTasks, canManage }: { project: Project; summary: Summary; backlogItems: BacklogItem[]; ganttTasks: GanttTaskOption[]; canManage: boolean }) {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('in_progress');
+    const [linkingItemId, setLinkingItemId] = useState<number | null>(null);
+    const { data, setData, put, processing, errors, reset } = useForm<{ task_ids: number[] }>({ task_ids: [] });
     const visibleBacklogItems = useMemo(() => backlogItems.filter((item) => {
         const matchesSearch = `${item.code} ${item.epic} ${item.title} ${item.description ?? ''}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'));
         return matchesSearch && (!status || item.status === status);
     }), [backlogItems, search, status]);
+    const openTaskLinks = (item: BacklogItem) => {
+        setData('task_ids', item.gantt_tasks.map((task) => task.id));
+        setLinkingItemId(item.id);
+    };
+    const saveTaskLinks = (event: FormEvent, itemId: number) => {
+        event.preventDefault();
+        put(route('projects.backlog.gantt-tasks.sync', [project.id, itemId]), {
+            preserveScroll: true,
+            onSuccess: () => { setLinkingItemId(null); reset(); },
+        });
+    };
 
     return <AuthenticatedLayout>
         <Head title={`${project.code} — Visão geral`} />
@@ -66,8 +82,90 @@ export default function Overview({ project, summary, backlogItems }: { project: 
             </section>
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:px-6"><div><p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Backlog · {backlogItems.length} itens</p><h2 className="mt-1 font-semibold text-slate-900">Itens cadastrados</h2></div><div className="flex flex-wrap gap-2"><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar item, épico ou código" className="w-full rounded-lg border-slate-200 text-sm sm:w-60" aria-label="Buscar item, épico ou código" /><select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border-slate-200 text-sm" aria-label="Filtrar por status do backlog"><option value="">Todos os status</option>{Object.entries(backlogStatusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select><Link href={route('projects.backlog.index', project.id)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Abrir backlog</Link></div></div>
-                <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400"><th className="px-5 py-3 sm:px-6">Código</th><th className="px-4 py-3">Épico / item</th><th className="px-4 py-3">Prioridade</th><th className="px-4 py-3">Release</th><th className="px-4 py-3">Pontos</th><th className="px-5 py-3 sm:px-6">Status</th></tr></thead><tbody className="divide-y divide-slate-100">{visibleBacklogItems.map((item) => <tr key={item.id}><td className="whitespace-nowrap px-5 py-2 text-xs text-slate-500 sm:px-6">{item.code}</td><td className="min-w-64 px-4 py-2"><p className="text-xs font-medium text-indigo-600">{item.epic}</p><p className="mt-0.5 font-medium text-slate-800">{item.title}</p>{item.description && <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{item.description}</p>}</td><td className="whitespace-nowrap px-4 py-2"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{item.priority}</span></td><td className="whitespace-nowrap px-4 py-2 text-slate-600">{item.release || '—'}</td><td className="whitespace-nowrap px-4 py-2 text-slate-600">{item.points ?? '—'}</td><td className="whitespace-nowrap px-5 py-2 sm:px-6"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${backlogStatusTone[item.status] ?? 'bg-slate-100 text-slate-600'}`}>{backlogStatusLabels[item.status] ?? item.status}</span></td></tr>)}{visibleBacklogItems.length === 0 && <tr><td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">{backlogItems.length ? 'Nenhum item do backlog corresponde aos filtros.' : 'Nenhum item de backlog cadastrado para este projeto.'}</td></tr>}</tbody></table></div>
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:px-6"><div><p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Backlog · {backlogItems.length} itens · {backlogItems.filter((item) => item.gantt_tasks.length > 0).length} com vínculo ao Gantt</p><h2 className="mt-1 font-semibold text-slate-900">Itens cadastrados</h2></div><div className="flex flex-wrap gap-2"><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar item, épico ou código" className="w-full rounded-lg border-slate-200 text-sm sm:w-60" aria-label="Buscar item, épico ou código" /><select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border-slate-200 text-sm" aria-label="Filtrar por status do backlog"><option value="">Todos os status</option>{Object.entries(backlogStatusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select><Link href={route('projects.backlog.index', project.id)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Abrir backlog</Link></div></div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                        <thead>
+                            <tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                <th className="px-5 py-3 sm:px-6">Código</th>
+                                <th className="px-4 py-3">Épico / item</th>
+                                <th className="px-4 py-3">Prioridade</th>
+                                <th className="px-4 py-3">Release</th>
+                                <th className="px-4 py-3">Pontos</th>
+                                <th className="px-5 py-3 sm:px-6">Status</th>
+                                <th className="px-5 py-3 sm:px-6">Tarefas do Gantt</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {visibleBacklogItems.map((item) => (
+                                <Fragment key={item.id}>
+                                    <tr>
+                                        <td className="whitespace-nowrap px-5 py-2 text-xs text-slate-500 sm:px-6">{item.code}</td>
+                                        <td className="min-w-64 px-4 py-2">
+                                            <p className="text-xs font-medium text-indigo-600">{item.epic}</p>
+                                            <p className="mt-0.5 font-medium text-slate-800">{item.title}</p>
+                                            {item.description && <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{item.description}</p>}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-2">
+                                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{item.priority}</span>
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-2 text-slate-600">{item.release || '—'}</td>
+                                        <td className="whitespace-nowrap px-4 py-2 text-slate-600">{item.points ?? '—'}</td>
+                                        <td className="whitespace-nowrap px-5 py-2 sm:px-6">
+                                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${backlogStatusTone[item.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                                                {backlogStatusLabels[item.status] ?? item.status}
+                                            </span>
+                                        </td>
+                                        <td className="min-w-56 px-5 py-2 sm:px-6">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    {item.gantt_tasks.length ? <>
+                                                        <p className="text-xs font-medium text-slate-700">
+                                                            {item.gantt_tasks.length} tarefa(s) · {item.gantt_tasks.filter((task) => task.status === 'STATUS_DONE').length} concluída(s) · {Math.round(item.gantt_tasks.reduce((sum, task) => sum + task.progress, 0) / item.gantt_tasks.length)}% médio
+                                                        </p>
+                                                        <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.gantt_tasks.map((task) => task.name).join(', ')}</p>
+                                                    </> : <span className="text-xs text-slate-400">Sem vínculo</span>}
+                                                </div>
+                                                {canManage && <button type="button" onClick={() => openTaskLinks(item)} className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-800">Vincular</button>}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {linkingItemId === item.id && <tr>
+                                        <td colSpan={7} className="bg-indigo-50/50 px-5 py-4 sm:px-6">
+                                            <form onSubmit={(event) => saveTaskLinks(event, item.id)} className="flex flex-wrap items-end gap-3">
+                                                <label className="min-w-64 flex-1 text-xs font-semibold text-slate-700">
+                                                    Tarefas finais do Gantt
+                                                    <select
+                                                        multiple
+                                                        value={data.task_ids.map(String)}
+                                                        onChange={(event) => setData('task_ids', Array.from(event.currentTarget.selectedOptions, (option) => Number(option.value)))}
+                                                        className="mt-1 block min-h-24 w-full rounded-lg border-slate-300 bg-white text-sm"
+                                                        aria-describedby={`task-link-help-${item.id}`}
+                                                    >
+                                                        {ganttTasks.map((task) => <option key={task.id} value={task.id} disabled={task.backlog_item_id !== null && task.backlog_item_id !== item.id}>
+                                                            {task.code ? `${task.code} · ` : ''}{task.name}{task.backlog_item_id !== null && task.backlog_item_id !== item.id ? ' (já vinculada)' : ''}
+                                                        </option>)}
+                                                    </select>
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <button type="button" onClick={() => setLinkingItemId(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600">Cancelar</button>
+                                                    <button type="submit" disabled={processing || ganttTasks.length === 0} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Salvar vínculos</button>
+                                                </div>
+                                                <p id={`task-link-help-${item.id}`} className="w-full text-xs text-slate-500">Um item do backlog pode ser dividido em várias tarefas. Cada tarefa pode pertencer a um único item. Segure Ctrl para selecionar várias tarefas.</p>
+                                                {errors.task_ids && <p className="w-full text-xs text-rose-600">{errors.task_ids}</p>}
+                                            </form>
+                                        </td>
+                                    </tr>}
+                                </Fragment>
+                            ))}
+                            {visibleBacklogItems.length === 0 && <tr>
+                                <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                                    {backlogItems.length ? 'Nenhum item do backlog corresponde aos filtros.' : 'Nenhum item de backlog cadastrado para este projeto.'}
+                                </td>
+                            </tr>}
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </div>
     </AuthenticatedLayout>;

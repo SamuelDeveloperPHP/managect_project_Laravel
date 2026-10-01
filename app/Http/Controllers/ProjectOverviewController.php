@@ -13,16 +13,26 @@ class ProjectOverviewController extends Controller
     public function show(int $project): Response
     {
         $project = Project::query()->findOrFail($project);
-        $backlogItems = $project->backlogItems()->orderBy('priority')->orderBy('code')->get([
+        $backlogItems = $project->backlogItems()->with(['ganttTasks' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')])->orderBy('priority')->orderBy('code')->get([
             'id', 'code', 'epic', 'title', 'description', 'priority', 'status', 'release', 'points',
         ])->values();
         $tasks = GanttTask::query()->where('project_id', $project->id)->orderBy('sort_order')->orderBy('id')->get([
-            'id', 'code', 'name', 'description', 'level', 'status', 'progress', 'start_at', 'end_at',
+            'id', 'code', 'name', 'description', 'level', 'status', 'progress', 'start_at', 'end_at', 'project_backlog_item_id',
         ])->values();
 
         $leaves = $tasks->filter(function (GanttTask $task, int $index) use ($tasks): bool {
             return ! isset($tasks[$index + 1]) || (int) $tasks[$index + 1]->level <= (int) $task->level;
         })->values();
+        $backlogItems = $backlogItems->map(fn ($item) => [
+            ...$item->only('id', 'code', 'epic', 'title', 'description', 'priority', 'status', 'release', 'points'),
+            'gantt_tasks' => $item->ganttTasks->map(fn (GanttTask $task) => [
+                'id' => $task->id,
+                'code' => $task->code,
+                'name' => $task->name,
+                'status' => $task->status,
+                'progress' => (int) $task->progress,
+            ])->values(),
+        ])->values();
         $statusLabels = [
             'STATUS_DONE' => 'Concluídas',
             'STATUS_ACTIVE' => 'Em andamento',
@@ -71,7 +81,14 @@ class ProjectOverviewController extends Controller
 
         return Inertia::render('Projects/Overview', [
             'project' => $project->only('id', 'name', 'code', 'status', 'client', 'start_date', 'deadline'),
+            'canManage' => request()->user()->hasPermission('can_manage_projects'),
             'backlogItems' => $backlogItems,
+            'ganttTasks' => $leaves->map(fn (GanttTask $task) => [
+                'id' => $task->id,
+                'code' => $task->code,
+                'name' => $task->name,
+                'backlog_item_id' => $task->project_backlog_item_id ? (int) $task->project_backlog_item_id : null,
+            ])->values(),
             'summary' => [
                 'total' => $leaves->count(),
                 'completed' => $statusCounts['STATUS_DONE'],
