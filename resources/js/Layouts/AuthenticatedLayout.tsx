@@ -75,7 +75,7 @@ export default function Authenticated({
 
                 <div className="mt-auto border-t border-slate-100 p-4">
                     <div className="mb-3 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700" aria-hidden="true">{user.name.trim().charAt(0).toUpperCase()}</div>
+                        {user.profile_photo_url ? <img src={user.profile_photo_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-slate-200 object-cover" /> : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700" aria-hidden="true">{user.name.trim().charAt(0).toUpperCase()}</div>}
                         <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-slate-800">{user.name}</p>
                             <p className="truncate text-xs text-slate-500">{company?.name ?? user.email}</p>

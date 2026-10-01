@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,13 +32,37 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $data = $request->validated();
+        $photo = $data['photo'] ?? null;
+        unset($data['photo']);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $previousPhoto = $user->profile_photo_path;
+        $newPhoto = $photo?->store('profile-photos', 'public');
+        if ($photo && ! is_string($newPhoto)) {
+            throw new \RuntimeException('Não foi possível armazenar a foto do perfil.');
         }
 
-        $request->user()->save();
+        $user->fill($data);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        if ($newPhoto) {
+            $user->profile_photo_path = $newPhoto;
+        }
+
+        try {
+            $user->save();
+        } catch (\Throwable $exception) {
+            if ($newPhoto) Storage::disk('public')->delete($newPhoto);
+            throw $exception;
+        }
+
+        if ($newPhoto && $previousPhoto) {
+            Storage::disk('public')->delete($previousPhoto);
+        }
 
         return Redirect::route('profile.edit');
     }

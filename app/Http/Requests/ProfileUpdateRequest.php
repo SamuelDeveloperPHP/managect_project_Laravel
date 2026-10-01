@@ -26,6 +26,18 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'extensions:jpeg,jpg,png', 'max:2048'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'photo.image' => 'O arquivo enviado precisa ser uma imagem válida.',
+            'photo.mimes' => 'A foto deve estar no formato JPEG, JPG ou PNG.',
+            'photo.extensions' => 'A extensão da foto deve ser .jpeg, .jpg ou .png.',
+            'photo.max' => 'A foto deve ter no máximo 2 MB.',
         ];
     }
 }
