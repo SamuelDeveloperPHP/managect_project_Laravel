@@ -4,14 +4,17 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use App\Models\Concerns\AuditsChanges;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use AuditsChanges, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -20,8 +23,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'company_id',
         'email',
         'password',
+        'role',
+        'permissions',
+        'is_active',
+        'cpf',
     ];
 
     /**
@@ -44,6 +52,29 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function hasRole(string ...$roles): bool
+    {
+        return in_array($this->role ?: 'user', $roles, true);
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->hasRole('master', 'admin')) {
+            return true;
+        }
+
+        return (bool) (($this->permissions ?? [])[$permission] ?? false);
     }
 }

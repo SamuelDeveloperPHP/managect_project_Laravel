@@ -11,8 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table) {
+                if (! Schema::hasColumn('users', 'email_verified_at')) {
+                    $table->timestamp('email_verified_at')->nullable()->after('email');
+                }
+
+                if (! Schema::hasColumn('users', 'remember_token')) {
+                    $table->rememberToken();
+                }
+            });
+
+            return;
+        }
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->nullable()->index();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
