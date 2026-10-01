@@ -1,0 +1,22 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+
+type Assignment = { id: number; role: string; user: { id: number; name: string } | null };
+type Task = { id: number; code: string | null; name: string; description: string | null; level: number; status: string; progress: number; start_at: string; end_at: string; duration: number; depends: string; start_is_milestone: boolean; end_is_milestone: boolean; assignments: Assignment[] };
+type Project = { id: number; name: string; code: string; status: string; start_date: string | null; deadline: string | null };
+
+const date = (value: string) => new Date(value).toLocaleDateString('pt-BR');
+const statusLabel = (status: string) => ({ STATUS_ACTIVE: 'Ativa', STATUS_DONE: 'Concluída', STATUS_SUSPENDED: 'Suspensa', STATUS_FAILED: 'Bloqueada' }[status] ?? status.replace(/^STATUS_/, '').toLowerCase());
+const indent = ['pl-0', 'pl-4', 'pl-8', 'pl-12', 'pl-16', 'pl-20', 'pl-24', 'pl-28', 'pl-32'];
+
+export default function Timeline({ project, tasks }: { project: Project; tasks: Task[] }) {
+    const complete = tasks.filter((task) => task.progress >= 100).length;
+    const active = tasks.filter((task) => task.progress > 0 && task.progress < 100).length;
+    return <AuthenticatedLayout header={<div><Link href={route('projects.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">← Projetos</Link><h2 className="mt-1 text-2xl font-semibold text-slate-900">Cronograma · {project.name}</h2></div>}>
+        <Head title={`${project.code} — Cronograma`} />
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+            <section className="rounded-xl bg-slate-900 p-6 text-white"><div className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-sm font-semibold text-indigo-300">{project.code} · {project.status}</p><h1 className="mt-2 text-xl font-semibold">Cronograma do projeto</h1><p className="mt-1 text-sm text-slate-300">{project.start_date ? date(project.start_date) : 'Início não definido'} → {project.deadline ? date(project.deadline) : 'Prazo não definido'}</p></div><Link href={route('projects.backlog.index', project.id)} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-indigo-50">Abrir backlog</Link></div><div className="mt-6 flex flex-wrap gap-8 text-sm"><span><b className="text-xl">{tasks.length}</b> tarefas</span><span><b className="text-xl">{active}</b> em andamento</span><span><b className="text-xl">{complete}</b> concluídas</span></div></section>
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h3 className="font-semibold text-slate-900">Tarefas importadas</h3><p className="mt-1 text-sm text-slate-500">Visualização do cronograma de origem. Datas e responsáveis são preservados.</p></div><div className="divide-y divide-slate-100">{tasks.map((task) => <article key={task.id} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_180px_190px]"><div className={`min-w-0 ${indent[Math.min(task.level, 8)]}`}><div className="flex flex-wrap items-center gap-2"><p className="font-medium text-slate-900">{task.name}</p>{task.code && <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">{task.code}</span>}{(task.start_is_milestone || task.end_is_milestone) && <span className="rounded bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700">Marco</span>}</div>{task.description && <p className="mt-1 line-clamp-2 text-sm text-slate-500">{task.description}</p>}<p className="mt-1 text-xs text-slate-400">{task.assignments.map((assignment) => assignment.user?.name).filter(Boolean).join(', ') || `Duração: ${task.duration} dia(s)`}</p></div><div className="self-center"><div className="flex justify-between gap-2 text-xs text-slate-500"><span>{statusLabel(task.status)}</span><span>{task.progress}%</span></div><progress className="mt-2 block h-1.5 w-full accent-indigo-600" value={Math.min(100, task.progress)} max={100} aria-label={`Progresso ${task.progress}%`} /></div><div className="self-center text-sm text-slate-600">{date(task.start_at)}<span className="mx-2 text-slate-300">→</span>{date(task.end_at)}</div></article>)}{tasks.length === 0 && <p className="px-5 py-10 text-center text-sm text-slate-500">Não há tarefas associadas a este projeto.</p>}</div></section>
+        </div>
+    </AuthenticatedLayout>;
+}
