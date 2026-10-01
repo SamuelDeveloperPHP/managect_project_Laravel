@@ -1,10 +1,9 @@
 (function () {
   var csrfToken = document.querySelector('meta[name="csrf-token"]');
-  var projectId = document.body.getAttribute('data-project-id');
-  var toastEl = document.getElementById('gantt-toast');
   var toastTimer = null;
 
   function setStatus(message, type) {
+    var toastEl = document.getElementById('gantt-toast');
     if (!toastEl) return;
 
     toastEl.textContent = message;
@@ -173,7 +172,7 @@
     setStatus('Carregando cronograma...', 'info');
     patchFullscreenButton();
 
-    projectRequest('/api/projects/' + projectId + '/gantt')
+    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/gantt')
       .then(function (data) {
         window.ge = new GanttMaster();
         tuneLargeTimeline(data.project);
@@ -230,7 +229,7 @@
 
     var project = window.ge.saveProject();
 
-    projectRequest('/api/projects/' + projectId + '/gantt', {
+    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/gantt', {
       method: 'POST',
       body: JSON.stringify(project)
     })
