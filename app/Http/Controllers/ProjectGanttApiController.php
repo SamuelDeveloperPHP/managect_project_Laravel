@@ -1,0 +1,219 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\GanttTask;
+use App\Models\Project;
+use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+class ProjectGanttApiController extends Controller
+{
+    private const STATUSES = ['STATUS_ACTIVE', 'STATUS_DONE', 'STATUS_WAITING', 'STATUS_SUSPENDED', 'STATUS_FAILED', 'STATUS_UNDEFINED'];
+    private const ROLES = ['responsible' => 'Responsável', 'supporter' => 'Apoiador', 'reviewer' => 'Revisor'];
+
+    public function show(int $project): JsonResponse
+    {
+        $project = Project::query()->findOrFail($project);
+        return response()->json(['success' => true, 'project' => $this->projectPayload($project)]);
+    }
+
+    public function save(Request $request, int $project): JsonResponse
+    {
+        $project = Project::query()->findOrFail($project);
+        if (strlen($request->getContent()) > 1_048_576) {
+            return response()->json(['success' => false, 'message' => 'O arquivo enviado excede o limite de 1 MB.'], 413);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'tasks' => ['present', 'array', 'max:500'],
+            'tasks.*.id' => ['nullable', 'integer'],
+            'tasks.*.name' => ['nullable', 'string', 'max:190'],
+            'tasks.*.code' => ['nullable', 'string', 'max:80'],
+            'tasks.*.description' => ['nullable', 'string', 'max:4000'],
+            'tasks.*.level' => ['nullable', 'integer', 'between:0,20'],
+            'tasks.*.status' => ['nullable', Rule::in(self::STATUSES)],
+            'tasks.*.progress' => ['nullable', 'integer', 'between:0,100'],
+            'tasks.*.start' => ['required', 'numeric', 'min:0'],
+            'tasks.*.end' => ['required', 'numeric', 'min:0'],
+            'tasks.*.duration' => ['nullable', 'integer', 'between:1,3650'],
+            'tasks.*.depends' => ['nullable', 'string', 'max:255'],
+            'tasks.*.collapsed' => ['nullable', 'boolean'],
+            'tasks.*.startIsMilestone' => ['nullable', 'boolean'],
+            'tasks.*.endIsMilestone' => ['nullable', 'boolean'],
+            'tasks.*.assigs' => ['nullable', 'array', 'max:20'],
+            'tasks.*.assigs.*.resourceId' => ['required_with:tasks.*.assigs', 'integer'],
+            'tasks.*.assigs.*.roleId' => ['required_with:tasks.*.assigs', 'string', Rule::in(array_keys(self::ROLES))],
+            'tasks.*.assigs.*.effort' => ['nullable', 'integer', 'between:0,31536000000'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $tasks = array_values($validator->validated()['tasks']);
+        $companyId = (int) $project->company_id;
+        $existing = GanttTask::query()->where('project_id', $project->id)->get()->keyBy('id');
+        $activeUsers = User::query()->where('company_id', $companyId)->where('is_active', true)
+            ->whereIn('id', collect($tasks)->flatMap(fn (array $task) => collect($task['assigs'] ?? [])->pluck('resourceId'))->unique())
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        try {
+            $prepared = $this->prepareTasks($tasks, $activeUsers);
+            DB::transaction(function () use ($prepared, $existing, $project, $companyId, $request): void {
+                $retainedIds = [];
+                foreach ($prepared as $index => $task) {
+                    $taskId = (int) ($task['id'] ?? 0);
+                    if ($taskId > 0 && ! $existing->has($taskId)) {
+                        throw new \RuntimeException('Uma tarefa enviada não pertence a este cronograma.');
+                    }
+
+                    $record = $taskId > 0 ? $existing->get($taskId) : new GanttTask();
+                    $record->fill([
+                        'project_id' => $project->id,
+                        'company_id' => $companyId,
+                        'code' => $task['code'] ?? null,
+                        'name' => trim($task['name'] ?? '') ?: 'Nova tarefa '.($index + 1),
+                        'description' => $task['description'] ?? null,
+                        'level' => (int) ($task['level'] ?? 0),
+                        'status' => $task['status'] ?? 'STATUS_ACTIVE',
+                        'progress' => ($task['status'] ?? '') === 'STATUS_DONE' ? 100 : (int) ($task['progress'] ?? 0),
+                        'start_at' => $task['start_at'],
+                        'end_at' => $task['end_at'],
+                        'duration' => max(1, (int) ($task['duration'] ?? 1)),
+                        'depends' => $task['depends'] ?? '',
+                        'sort_order' => $index,
+                        'collapsed' => (bool) ($task['collapsed'] ?? false),
+                        'start_is_milestone' => (bool) ($task['startIsMilestone'] ?? false),
+                        'end_is_milestone' => (bool) ($task['endIsMilestone'] ?? false),
+                        'updated_by' => $request->user()->id,
+                    ]);
+                    if (! $taskId) $record->created_by = $request->user()->id;
+                    $record->save();
+                    $retainedIds[] = $record->id;
+
+                    $record->assignments()->delete();
+                    foreach ($task['assigs'] ?? [] as $assignment) {
+                        $record->assignments()->create([
+                            'company_id' => $companyId,
+                            'user_id' => (int) $assignment['resourceId'],
+                            'role' => $assignment['roleId'],
+                            'effort' => max(0, min(31_536_000_000, (int) ($assignment['effort'] ?? 0))),
+                        ]);
+                    }
+                }
+
+                GanttTask::query()->where('project_id', $project->id)->whereNotIn('id', $retainedIds)->delete();
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+            return response()->json(['success' => false, 'message' => $exception instanceof \RuntimeException ? $exception->getMessage() : 'Não foi possível salvar o cronograma.'], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'project' => $this->projectPayload($project),
+            'message' => 'Cronograma salvo com sucesso.',
+        ]);
+    }
+
+    private function prepareTasks(array $tasks, array $activeUsers): array
+    {
+        $prepared = [];
+        foreach ($tasks as $index => $task) {
+            $start = CarbonImmutable::createFromTimestampMs((int) $task['start'])->setTimezone(config('app.timezone'));
+            $end = CarbonImmutable::createFromTimestampMs((int) $task['end'])->setTimezone(config('app.timezone'));
+            if ($end->lt($start)) throw new \RuntimeException('A data final não pode ser anterior à data inicial.');
+
+            $depends = trim((string) ($task['depends'] ?? ''));
+            foreach (array_filter(explode(',', $depends)) as $dependency) {
+                if (! preg_match('/^([1-9][0-9]*)(?::(-?[0-9]+))?$/', trim($dependency), $matches)
+                    || (int) $matches[1] > count($tasks) || (int) $matches[1] === $index + 1) {
+                    throw new \RuntimeException('Uma predecessora aponta para uma tarefa inválida.');
+                }
+            }
+
+            foreach ($task['assigs'] ?? [] as $assignment) {
+                if (! in_array((int) $assignment['resourceId'], $activeUsers, true)) {
+                    throw new \RuntimeException('Um responsável selecionado não pertence à empresa ou está inativo.');
+                }
+            }
+            $prepared[] = $task + ['start_at' => $start, 'end_at' => $end];
+            $prepared[$index]['start_at'] = $start;
+            $prepared[$index]['end_at'] = $end;
+        }
+
+        return $prepared;
+    }
+
+    private function projectPayload(Project $project): array
+    {
+        $canWrite = request()->user()->hasPermission('can_manage_projects');
+        $tasks = GanttTask::query()->where('project_id', $project->id)
+            ->with(['assignments' => fn ($query) => $query->where('company_id', $project->company_id)->whereHas('user', fn ($users) => $users->where('company_id', $project->company_id))])
+            ->orderBy('sort_order')->orderBy('id')->get();
+        $items = $tasks->map(fn (GanttTask $task) => [
+            'id' => (int) $task->id,
+            'name' => $task->name,
+            'progress' => (int) $task->progress,
+            'progressByWorklog' => false,
+            'relevance' => 0,
+            'type' => '',
+            'typeId' => '',
+            'description' => $task->description ?? '',
+            'code' => $task->code ?? '',
+            'level' => (int) $task->level,
+            'status' => $task->status,
+            'color' => '#3aaf85',
+            'depends' => $task->depends,
+            'canWrite' => $canWrite,
+            'canAdd' => $canWrite,
+            'canDelete' => $canWrite,
+            'start' => $task->start_at->getTimestamp() * 1000,
+            'duration' => (int) $task->duration,
+            'end' => $task->end_at->getTimestamp() * 1000 + 999,
+            'startIsMilestone' => (bool) $task->start_is_milestone,
+            'endIsMilestone' => (bool) $task->end_is_milestone,
+            'collapsed' => (bool) $task->collapsed,
+            'assigs' => $task->assignments->map(fn ($assignment) => [
+                'id' => (string) $assignment->id,
+                'resourceId' => (string) $assignment->user_id,
+                'roleId' => $assignment->role,
+                'effort' => (int) $assignment->effort,
+            ])->values()->all(),
+            'hasChild' => false,
+        ])->values()->all();
+
+        if ($items === []) {
+            $start = now()->startOfDay();
+            $items = [[
+                'id' => -1, 'name' => 'Projeto inicial', 'progress' => 0, 'progressByWorklog' => false, 'relevance' => 0,
+                'type' => '', 'typeId' => '', 'description' => 'Primeira tarefa do cronograma.', 'code' => $project->code,
+                'level' => 0, 'status' => 'STATUS_ACTIVE', 'color' => '#3aaf85', 'depends' => '', 'canWrite' => $canWrite,
+                'canAdd' => $canWrite, 'canDelete' => $canWrite, 'start' => $start->getTimestamp() * 1000, 'duration' => 5,
+                'end' => $start->copy()->addDays(4)->endOfDay()->getTimestamp() * 1000 + 999,
+                'startIsMilestone' => false, 'endIsMilestone' => false, 'collapsed' => false, 'assigs' => [], 'hasChild' => false,
+            ]];
+        }
+
+        return [
+            'tasks' => $items,
+            'selectedRow' => 0,
+            'deletedTaskIds' => [],
+            'resources' => User::query()->where('company_id', $project->company_id)->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn (User $user) => ['id' => (string) $user->id, 'name' => $user->name])->all(),
+            'roles' => collect(self::ROLES)->map(fn (string $name, string $id) => ['id' => $id, 'name' => $name])->values()->all(),
+            'canWrite' => $canWrite,
+            'canAdd' => $canWrite,
+            'canWriteOnParent' => $canWrite,
+            'canDelete' => $canWrite,
+            'canSeeCriticalPath' => true,
+            'canAddIssue' => false,
+            'cannotCloseTaskIfIssueOpen' => false,
+            'zoom' => 'w3',
+        ];
+    }
+}
