@@ -19,7 +19,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
             <div className="min-h-screen bg-slate-50 text-slate-900">
                 <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950 text-white shadow-sm">
                     <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-5 px-5 sm:px-8">
-                        <a href="#inicio" className="flex items-center gap-2.5 font-black tracking-tight" aria-label="Trilha+ — início">
+                        <a href="#inicio" className="flex items-center gap-2.5 font-bold tracking-tight" aria-label="Trilha+ — início">
                             <ApplicationLogo className="h-9 w-9" />
                             <span>Trilha+</span>
                         </a>
@@ -43,9 +43,9 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                         <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(rgba(37,99,235,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,.055)_1px,transparent_1px)] [background-size:42px_42px]" />
                         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[.9fr_1.1fr] lg:gap-9 lg:py-24">
                             <div>
-                                <p className="mb-3 text-xs font-black uppercase tracking-[.18em] text-blue-700">Sistema multiempresa</p>
-                                <h1 className="text-5xl font-black tracking-[-.055em] text-slate-950 sm:text-6xl">Trilha+</h1>
-                                <p className="mt-2 text-sm font-semibold tracking-wide text-blue-700">Do plano à entrega.</p>
+                                <p className="mb-3 text-xs font-bold text-blue-700">Sistema multiempresa</p>
+                                <h1 className="text-5xl font-bold tracking-[-.055em] text-slate-950 sm:text-6xl">Trilha+</h1>
+                                <p className="mt-2 text-sm font-semibold text-blue-700">Do plano à entrega.</p>
                                 <p className="mt-4 max-w-xl text-xl font-extrabold leading-snug tracking-tight text-slate-800 sm:text-2xl">Gestão de projetos, tarefas e permissões — por empresa.</p>
                                 <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Centralize equipes, responsabilidades, prazos e execução em uma rotina visual. Cada organização administra seus próprios usuários e dados, com papéis e registros de atividade.</p>
                                 <div className="mt-7 flex flex-wrap gap-3">
@@ -61,16 +61,16 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,.16)] sm:p-4" aria-label="Prévia ilustrativa do painel Trilha+">
                                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-2 pb-4 pt-1 sm:px-3">
-                                    <div className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 font-black text-blue-700">E</span><div className="min-w-0"><strong className="block truncate text-sm text-slate-900">Empresa da equipe</strong><span className="text-xs text-slate-500">Visão administrativa</span></div></div>
+                                    <div className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 font-bold text-blue-700">E</span><div className="min-w-0"><strong className="block truncate text-sm text-slate-900">Empresa da equipe</strong><span className="text-xs text-slate-500">Visão administrativa</span></div></div>
                                     <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">● Ativo</span>
                                 </div>
                                 <div className="grid gap-4 pt-4 sm:grid-cols-[148px_1fr]">
                                     <aside className="hidden rounded-xl bg-slate-950 p-3 text-xs text-slate-300 sm:block" aria-hidden="true">
-                                        <p className="mb-3 px-2 text-[10px] font-black uppercase tracking-widest text-slate-500">Menu</p>
+                                        <p className="mb-3 px-2 text-[10px] font-bold text-slate-500">Menu</p>
                                         <div className="space-y-1"><div className="rounded-lg bg-blue-600 px-3 py-2 font-bold text-white">Projetos</div><div className="px-3 py-2">Backlog</div><div className="px-3 py-2">Equipe</div><div className="px-3 py-2">Auditoria</div></div>
                                     </aside>
                                     <div className="min-w-0 space-y-4 px-1 sm:px-0">
-                                        <div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Visão geral</p><h2 className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">Rotina de projetos</h2></div><span className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-500">DEMONSTRAÇÃO</span></div>
+                                        <div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-bold text-blue-700">Visão geral</p><h2 className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">Rotina de projetos</h2></div><span className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-500">DEMONSTRAÇÃO</span></div>
                                         <div className="grid grid-cols-3 gap-2">
                                             <PreviewStat label="Projetos" value="12" tone="blue" />
                                             <PreviewStat label="Em andamento" value="08" tone="green" />
@@ -115,7 +115,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                     <section id="acesso" className="scroll-mt-20 py-16 sm:py-20">
                         <div className="mx-auto max-w-7xl px-5 sm:px-8">
                             <div className="overflow-hidden rounded-2xl bg-slate-950 p-7 text-white shadow-lg sm:p-10 lg:flex lg:items-center lg:justify-between lg:gap-12">
-                                <div className="max-w-2xl"><p className="text-xs font-black uppercase tracking-[.18em] text-blue-300">Acesso sob controle</p><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Um ambiente por empresa. Permissões para cada papel.</h2><p className="mt-4 leading-7 text-slate-300">O administrador da organização cuida da própria equipe; a plataforma registra as atividades realizadas no painel.</p></div>
+                                <div className="max-w-2xl"><p className="text-xs font-bold text-blue-300">Acesso sob controle</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Um ambiente por empresa. Permissões para cada papel.</h2><p className="mt-4 leading-7 text-slate-300">O administrador da organização cuida da própria equipe; a plataforma registra as atividades realizadas no painel.</p></div>
                                 <div className="mt-7 grid shrink-0 grid-cols-3 gap-2 lg:mt-0">
                                     <AccessChip title="Master" detail="Global" />
                                     <AccessChip title="Admin" detail="Da empresa" />
@@ -127,7 +127,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                     <section className="border-t border-blue-100 bg-blue-50/60 py-14 sm:py-16">
                         <div className="mx-auto flex max-w-7xl flex-col items-start gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between">
-                            <div><p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Comece agora</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Abra o painel e continue sua rotina.</h2><p className="mt-2 text-sm text-slate-600">Entre com seu usuário ou cadastre sua empresa para começar.</p></div>
+                            <div><p className="text-xs font-bold text-blue-700">Comece agora</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Abra o painel e continue sua rotina.</h2><p className="mt-2 text-sm text-slate-600">Entre com seu usuário ou cadastre sua empresa para começar.</p></div>
                             <Link href={mainHref} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow transition hover:-translate-y-0.5 hover:bg-blue-700">{mainLabel}<ArrowIcon /></Link>
                         </div>
                     </section>
@@ -135,7 +135,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                 <footer className="bg-slate-950 text-slate-300">
                     <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-7 text-sm sm:px-8 md:flex-row md:items-center md:justify-between">
-                        <span className="flex items-center gap-2 font-black text-white"><ApplicationLogo className="h-7 w-7" />Trilha+</span>
+                        <span className="flex items-center gap-2 font-bold text-white"><ApplicationLogo className="h-7 w-7" />Trilha+</span>
                         <span>Gestão de projetos, equipes, empresas e atividade.</span>
                         <Link href={route('company.versions.index')} className="font-semibold text-blue-300 hover:text-white">Histórico de versões</Link>
                     </div>
@@ -150,12 +150,12 @@ function ArrowIcon() {
 }
 
 function Metric({ title, detail }: { title: string; detail: string }) {
-    return <div className="rounded-lg bg-white/80 px-3 py-2.5"><dt className="text-sm font-black text-slate-900">{title}</dt><dd className="mt-1 text-xs leading-5 text-slate-500">{detail}</dd></div>;
+    return <div className="rounded-lg bg-white/80 px-3 py-2.5"><dt className="text-sm font-bold text-slate-900">{title}</dt><dd className="mt-1 text-xs leading-5 text-slate-500">{detail}</dd></div>;
 }
 
 function PreviewStat({ label, value, tone }: { label: string; value: string; tone: 'blue' | 'green' | 'amber' }) {
     const tones = { blue: 'border-blue-100 bg-blue-50 text-blue-700', green: 'border-emerald-100 bg-emerald-50 text-emerald-700', amber: 'border-amber-100 bg-amber-50 text-amber-700' };
-    return <div className={`rounded-lg border px-3 py-2 ${tones[tone]}`}><span className="block text-[10px] font-bold opacity-80">{label}</span><strong className="mt-1 block text-xl font-black">{value}</strong></div>;
+    return <div className={`rounded-lg border px-3 py-2 ${tones[tone]}`}><span className="block text-[10px] font-bold opacity-80">{label}</span><strong className="mt-1 block text-xl font-bold">{value}</strong></div>;
 }
 
 function TimelineRow({ title, color, span, offset = false }: { title: string; color: string; span: string; offset?: boolean }) {
@@ -163,15 +163,15 @@ function TimelineRow({ title, color, span, offset = false }: { title: string; co
 }
 
 function SectionIntro({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
-    return <div className="max-w-2xl"><p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">{eyebrow}</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950 sm:text-4xl">{title}</h2>{description && <p className="mt-3 leading-7 text-slate-600">{description}</p>}</div>;
+    return <div className="max-w-2xl"><p className="text-xs font-bold text-blue-700">{eyebrow}</p><h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-slate-950 sm:text-4xl">{title}</h2>{description && <p className="mt-3 leading-7 text-slate-600">{description}</p>}</div>;
 }
 
 function Feature({ number, title, text }: { number: string; title: string; text: string }) {
-    return <article className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"><span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-xs font-black text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">{number}</span><h3 className="mt-4 text-base font-extrabold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>;
+    return <article className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"><span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-50 text-xs font-bold text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">{number}</span><h3 className="mt-4 text-base font-extrabold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>;
 }
 
 function Step({ number, title, text }: { number: string; title: string; text: string }) {
-    return <article className="relative rounded-xl border border-slate-200 bg-slate-50 p-5"><span className="text-xs font-black tracking-widest text-blue-700">{number}</span><h3 className="mt-3 text-lg font-extrabold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>;
+    return <article className="relative rounded-xl border border-slate-200 bg-slate-50 p-5"><span className="text-xs font-bold text-blue-700">{number}</span><h3 className="mt-3 text-lg font-extrabold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>;
 }
 
 function AccessChip({ title, detail }: { title: string; detail: string }) {
