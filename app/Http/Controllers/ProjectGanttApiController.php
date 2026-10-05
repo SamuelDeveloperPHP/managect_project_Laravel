@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GanttTask;
 use App\Models\Project;
 use App\Models\ProjectBacklogItem;
+use App\Models\ProjectBacklog;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -18,15 +19,17 @@ class ProjectGanttApiController extends Controller
     private const STATUSES = ['STATUS_ACTIVE', 'STATUS_DONE', 'STATUS_WAITING', 'STATUS_SUSPENDED', 'STATUS_FAILED', 'STATUS_UNDEFINED'];
     private const ROLES = ['responsible' => 'Responsável', 'supporter' => 'Apoiador', 'reviewer' => 'Revisor'];
 
-    public function show(int $project): JsonResponse
+    public function show(int $project, int $backlog): JsonResponse
     {
         $project = Project::query()->findOrFail($project);
-        return response()->json(['success' => true, 'project' => $this->projectPayload($project)]);
+        $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
+        return response()->json(['success' => true, 'project' => $this->projectPayload($project, $backlog)]);
     }
 
-    public function save(Request $request, int $project): JsonResponse
+    public function save(Request $request, int $project, int $backlog): JsonResponse
     {
         $project = Project::query()->findOrFail($project);
+        $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
         if (strlen($request->getContent()) > 1_048_576) {
             return response()->json(['success' => false, 'message' => 'O arquivo enviado excede o limite de 1 MB.'], 413);
         }
@@ -60,11 +63,11 @@ class ProjectGanttApiController extends Controller
         $tasks = array_values($validator->validated()['tasks']);
         $companyId = (int) $project->company_id;
         $backlogItemIds = collect($tasks)->pluck('backlogItemId')->filter()->map(fn ($id) => (int) $id)->unique();
-        $validBacklogItemIds = ProjectBacklogItem::query()->where('project_id', $project->id)->whereIn('id', $backlogItemIds)->pluck('id')->map(fn ($id) => (int) $id);
+        $validBacklogItemIds = ProjectBacklogItem::query()->where('project_backlog_id', $backlog->id)->whereIn('id', $backlogItemIds)->pluck('id')->map(fn ($id) => (int) $id);
         if ($backlogItemIds->diff($validBacklogItemIds)->isNotEmpty()) {
             return response()->json(['success' => false, 'message' => 'Um item de backlog vinculado não pertence a este projeto.'], 422);
         }
-        $existing = GanttTask::query()->where('project_id', $project->id)->get()->keyBy('id');
+        $existing = GanttTask::query()->where('project_backlog_id', $backlog->id)->get()->keyBy('id');
         $activeUsers = User::query()->where('company_id', $companyId)->where('is_active', true)
             ->whereIn('id', collect($tasks)->flatMap(fn (array $task) => collect($task['assigs'] ?? [])->pluck('resourceId'))->unique())
             ->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -82,7 +85,7 @@ class ProjectGanttApiController extends Controller
                 }
             }
 
-            DB::transaction(function () use ($prepared, $existing, $project, $companyId, $request): void {
+            DB::transaction(function () use ($prepared, $existing, $project, $backlog, $companyId, $request): void {
                 $retainedIds = [];
                 foreach ($prepared as $index => $task) {
                     $taskId = (int) ($task['id'] ?? 0);
@@ -93,6 +96,7 @@ class ProjectGanttApiController extends Controller
                     $record = $taskId > 0 ? $existing->get($taskId) : new GanttTask();
                     $record->fill([
                         'project_id' => $project->id,
+                        'project_backlog_id' => $backlog->id,
                         'company_id' => $companyId,
                         'code' => $task['code'] ?? null,
                         'name' => trim($task['name'] ?? '') ?: 'Nova tarefa '.($index + 1),
@@ -128,7 +132,7 @@ class ProjectGanttApiController extends Controller
                     }
                 }
 
-                GanttTask::query()->where('project_id', $project->id)->whereNotIn('id', $retainedIds)->delete();
+                GanttTask::query()->where('project_backlog_id', $backlog->id)->whereNotIn('id', $retainedIds)->delete();
             });
         } catch (\Throwable $exception) {
             report($exception);
@@ -137,7 +141,7 @@ class ProjectGanttApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'project' => $this->projectPayload($project),
+            'project' => $this->projectPayload($project, $backlog),
             'message' => 'Cronograma salvo com sucesso.',
         ]);
     }
@@ -171,10 +175,10 @@ class ProjectGanttApiController extends Controller
         return $prepared;
     }
 
-    private function projectPayload(Project $project): array
+    private function projectPayload(Project $project, ProjectBacklog $backlog): array
     {
         $canWrite = request()->user()->hasPermission('can_manage_projects');
-        $tasks = GanttTask::query()->where('project_id', $project->id)
+        $tasks = GanttTask::query()->where('project_backlog_id', $backlog->id)
             ->with(['assignments' => fn ($query) => $query->where('company_id', $project->company_id)->whereHas('user', fn ($users) => $users->where('company_id', $project->company_id))])
             ->orderBy('sort_order')->orderBy('id')->get();
         $items = $tasks->map(fn (GanttTask $task) => [

@@ -172,7 +172,7 @@
     setStatus('Carregando cronograma...', 'info');
     patchFullscreenButton();
 
-    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/gantt')
+    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/backlogs/' + document.body.getAttribute('data-backlog-id') + '/gantt')
       .then(function (data) {
         window.ge = new GanttMaster();
         tuneLargeTimeline(data.project);
@@ -229,7 +229,7 @@
 
     var project = window.ge.saveProject();
 
-    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/gantt', {
+    projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/backlogs/' + document.body.getAttribute('data-backlog-id') + '/gantt', {
       method: 'POST',
       body: JSON.stringify(project)
     })

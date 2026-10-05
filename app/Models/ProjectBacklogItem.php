@@ -13,7 +13,7 @@ class ProjectBacklogItem extends Model
 {
     use AuditsChanges, BelongsToCompany, HasFactory;
 
-    protected $fillable = ['company_id', 'project_id', 'code', 'epic', 'title', 'description', 'priority', 'status', 'release', 'points'];
+    protected $fillable = ['company_id', 'project_id', 'project_backlog_id', 'code', 'epic', 'title', 'description', 'priority', 'status', 'release', 'points'];
 
     protected static function booted(): void
     {
@@ -22,6 +22,11 @@ class ProjectBacklogItem extends Model
 
             if ($project->company_id !== $item->company_id) {
                 throw new \LogicException('O item do backlog deve pertencer à mesma empresa do projeto.');
+            }
+
+            $backlog = ProjectBacklog::withoutGlobalScopes()->findOrFail($item->project_backlog_id);
+            if ((int) $backlog->project_id !== (int) $item->project_id || (int) $backlog->company_id !== (int) $item->company_id) {
+                throw new \LogicException('O item deve pertencer ao backlog e ao projeto correspondentes.');
             }
         };
 
@@ -32,6 +37,11 @@ class ProjectBacklogItem extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function backlog(): BelongsTo
+    {
+        return $this->belongsTo(ProjectBacklog::class, 'project_backlog_id');
     }
 
     public function ganttTasks(): HasMany

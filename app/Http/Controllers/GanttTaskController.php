@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectBacklog;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class GanttTaskController extends Controller
 {
-    public function index(int $project): Response
+    public function index(int $project, int $backlog): Response
     {
         $project = Project::query()->findOrFail($project);
+        $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
 
         return Inertia::render('Projects/Timeline', [
             'project' => $project->only('id', 'name', 'code', 'status', 'start_date', 'deadline'),
+            'backlog' => $backlog->only('id', 'name', 'code'),
             'canManage' => request()->user()->hasPermission('can_manage_projects'),
             'ganttTemplates' => $this->templates(),
         ]);

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\Project;
+use App\Models\ProjectBacklog;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,9 +25,11 @@ class AdminDashboardAndTimelineTest extends TestCase
         $project = Project::create(['name' => 'Projeto A', 'code' => 'PROJ-A']);
         app(TenantContext::class)->setCompanyId($otherCompany->id);
         Project::create(['company_id' => $otherCompany->id, 'name' => 'Projeto B', 'code' => 'PROJ-B']);
+        app(TenantContext::class)->setCompanyId($company->id);
+        $backlogA = ProjectBacklog::create(['company_id' => $company->id, 'project_id' => $project->id, 'code' => 'BL-1', 'name' => 'Backlog']);
         DB::table('gantt_tasks')->insert([
-            ['phalcon_id' => 11, 'company_id' => $company->id, 'project_id' => $project->id, 'name' => 'Tarefa da empresa A', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['phalcon_id' => 12, 'company_id' => $otherCompany->id, 'project_id' => null, 'name' => 'Tarefa da empresa B', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['phalcon_id' => 11, 'company_id' => $company->id, 'project_id' => $project->id, 'project_backlog_id' => $backlogA->id, 'name' => 'Tarefa da empresa A', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['phalcon_id' => 12, 'company_id' => $otherCompany->id, 'project_id' => null, 'project_backlog_id' => null, 'name' => 'Tarefa da empresa B', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $this->actingAs($admin)->get(route('dashboard'))
@@ -48,7 +51,7 @@ class AdminDashboardAndTimelineTest extends TestCase
         User::factory()->create(['company_id' => $companyA->id, 'role' => 'user', 'is_active' => true]);
         User::factory()->create(['company_id' => $companyA->id, 'role' => 'user', 'is_active' => false]);
         User::factory()->create(['company_id' => $companyB->id, 'role' => 'admin', 'is_active' => true]);
-        $master = User::factory()->create(['company_id' => $companyA->id, 'role' => 'master', 'is_active' => true]);
+        $master = $this->platformMaster();
 
         DB::table('sessions')->insert([
             ['id' => 'first-session', 'user_id' => $online->id, 'ip_address' => '127.0.0.1', 'user_agent' => 'test', 'payload' => '', 'last_activity' => now()->timestamp],
@@ -75,7 +78,7 @@ class AdminDashboardAndTimelineTest extends TestCase
     {
         $companyA = Company::factory()->create(['name' => 'Empresa A']);
         $companyB = Company::factory()->create(['name' => 'Empresa B']);
-        $master = User::factory()->create(['company_id' => $companyA->id, 'role' => 'master']);
+        $master = $this->platformMaster();
 
         app(TenantContext::class)->setCompanyId($companyA->id);
         Project::create(['name' => 'Projeto visível A', 'code' => 'PROJ-A']);
@@ -111,18 +114,39 @@ class AdminDashboardAndTimelineTest extends TestCase
         $project = Project::create(['name' => 'Projeto do cliente', 'code' => 'CLIENT-1']);
         app(TenantContext::class)->setCompanyId($otherCompany->id);
         $otherProject = Project::create(['name' => 'Projeto externo', 'code' => 'EXTERNAL-1']);
+        app(TenantContext::class)->setCompanyId($company->id);
+        $backlog = ProjectBacklog::create(['company_id' => $company->id, 'project_id' => $project->id, 'code' => 'BL-1', 'name' => 'Backlog']);
+        app(TenantContext::class)->setCompanyId($otherCompany->id);
+        $otherBacklog = ProjectBacklog::create(['company_id' => $otherCompany->id, 'project_id' => $otherProject->id, 'code' => 'BL-2', 'name' => 'Backlog externo']);
         DB::table('gantt_tasks')->insert([
-            ['phalcon_id' => 21, 'company_id' => $company->id, 'project_id' => $project->id, 'name' => 'Tarefa importada', 'status' => 'STATUS_ACTIVE', 'progress' => 25, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['phalcon_id' => 22, 'company_id' => $otherCompany->id, 'project_id' => $otherProject->id, 'name' => 'Tarefa privada', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['phalcon_id' => 21, 'company_id' => $company->id, 'project_id' => $project->id, 'project_backlog_id' => $backlog->id, 'name' => 'Tarefa importada', 'status' => 'STATUS_ACTIVE', 'progress' => 25, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['phalcon_id' => 22, 'company_id' => $otherCompany->id, 'project_id' => $otherProject->id, 'project_backlog_id' => $otherBacklog->id, 'name' => 'Tarefa privada', 'status' => 'STATUS_ACTIVE', 'progress' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'duration' => 1, 'depends' => '', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $this->actingAs($user)->get(route('projects.timeline.index', $project))
+        $this->actingAs($user)->get(route('projects.timeline.index', [$project, $backlog]))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Projects/Timeline')
-                ->has('tasks', 1)
-                ->where('tasks.0.name', 'Tarefa importada'));
+                ->where('project.id', $project->id));
 
-        $this->actingAs($user)->get(route('projects.timeline.index', $otherProject))->assertNotFound();
+        $this->actingAs($user)->getJson(route('projects.gantt.show', [$project, $backlog]))
+            ->assertOk()
+            ->assertJsonPath('project.tasks.0.name', 'Tarefa importada')
+            ->assertJsonMissing(['name' => 'Tarefa privada']);
+
+        $this->actingAs($user)->get(route('projects.timeline.index', [$otherProject, $otherBacklog]))->assertNotFound();
+        $this->actingAs($user)->getJson(route('projects.gantt.show', [$otherProject, $otherBacklog]))->assertNotFound();
+    }
+
+    private function platformMaster(): User
+    {
+        Company::query()->find(2) ?? Company::factory()->create(['id' => 2]);
+
+        return User::factory()->create([
+            'company_id' => 2,
+            'email' => User::PLATFORM_MASTER_EMAIL,
+            'role' => 'master',
+            'is_active' => true,
+        ]);
     }
 }
