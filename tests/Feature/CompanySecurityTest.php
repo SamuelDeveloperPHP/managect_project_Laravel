@@ -327,4 +327,55 @@ class CompanySecurityTest extends TestCase
             'name' => $admin->name, 'email' => 'outro@gmail.example', 'role' => 'admin',
         ])->assertSessionHasErrors('email');
     }
+
+    public function test_company_can_have_only_one_administrator(): void
+    {
+        $company = Company::factory()->create();
+        $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
+        $member = User::factory()->create(['company_id' => $company->id, 'role' => 'user']);
+
+        $this->actingAs($admin)->post(route('company.users.store'), [
+            'name' => 'Segundo', 'email' => 'segundo@empresa.example', 'password' => 'long-secure-password',
+            'password_confirmation' => 'long-secure-password', 'role' => 'admin',
+        ])->assertSessionHasErrors('role');
+        $this->assertDatabaseMissing('users', ['email' => 'segundo@empresa.example']);
+
+        $this->put(route('company.users.update', $member), [
+            'name' => $member->name, 'email' => $member->email, 'role' => 'admin',
+        ])->assertSessionHasErrors('role');
+        $this->assertSame('user', $member->fresh()->role);
+    }
+
+    public function test_administration_can_be_transferred_to_an_active_member(): void
+    {
+        $company = Company::factory()->create();
+        $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
+        $member = User::factory()->create(['company_id' => $company->id, 'role' => 'user']);
+        $inactive = User::factory()->create(['company_id' => $company->id, 'role' => 'user', 'is_active' => false]);
+        $outsider = User::factory()->create(['role' => 'user']);
+
+        $this->actingAs($admin)->post(route('company.users.transfer-admin', $inactive))->assertSessionHasErrors('role');
+        $this->post(route('company.users.transfer-admin', $outsider))->assertNotFound();
+        $this->post(route('company.users.transfer-admin', $member))->assertSessionHasNoErrors();
+
+        $this->assertSame('admin', $member->fresh()->role);
+        $this->assertSame('user', $admin->fresh()->role);
+        $this->assertSame(1, User::where('company_id', $company->id)->where('role', 'admin')->count());
+    }
+
+    public function test_regular_user_cannot_transfer_administration_and_master_can_for_any_company(): void
+    {
+        $company = Company::factory()->create();
+        $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
+        $member = User::factory()->create(['company_id' => $company->id, 'role' => 'user']);
+
+        $this->actingAs($member)->post(route('company.users.transfer-admin', $member))->assertForbidden();
+
+        Company::query()->find(2) ?? Company::factory()->create(['id' => 2]);
+        $master = User::factory()->create(['company_id' => 2, 'email' => User::PLATFORM_MASTER_EMAIL, 'role' => 'master']);
+        $this->actingAs($master)->post(route('company.users.transfer-admin', $member), ['company_id' => $company->id])->assertSessionHasNoErrors();
+
+        $this->assertSame('admin', $member->fresh()->role);
+        $this->assertSame('user', $admin->fresh()->role);
+    }
 }

@@ -71,6 +71,7 @@ Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role
     Route::get('/users', [CompanyAccessController::class, 'users'])->name('users.index');
     Route::post('/users', [CompanyAccessController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [CompanyAccessController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/transfer-admin', [CompanyAccessController::class, 'transferAdmin'])->middleware('throttle:sensitive-account-action')->name('users.transfer-admin');
     Route::patch('/users/{user}/status', [CompanyAccessController::class, 'setActive'])->name('users.status');
     Route::get('/audit', [CompanyAccessController::class, 'audit'])->name('audit.index');
 });
