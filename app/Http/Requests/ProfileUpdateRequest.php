@@ -24,7 +24,9 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                $this->user()->isPlatformMasterIdentity()
+                    ? Rule::in([User::PLATFORM_MASTER_EMAIL])
+                    : Rule::unique(User::class)->ignore($this->user()->id),
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $secondary = $this->user()->role === 'admin' ? $this->user()->company?->secondary_recovery_email : null;
                     if ($secondary && mb_strtolower($secondary) === mb_strtolower((string) $value)) {

@@ -10,6 +10,7 @@ type ManagedUser = {
     id: number;
     name: string;
     email: string;
+    cpf: string | null;
     role: 'admin' | 'user' | 'master';
     permissions: Record<string, boolean> | null;
     is_active: boolean;
@@ -25,6 +26,7 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
     const form = useForm({
         name: user.name,
         email: user.email,
+        cpf: user.cpf ?? '',
         role: user.role === 'master' ? 'user' : user.role,
         permissions: { ...(user.permissions ?? {}) },
     });
@@ -37,10 +39,11 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
     };
 
     return (
-        <form onSubmit={save} className="grid gap-4 border-t border-slate-100 px-5 py-5 lg:grid-cols-[1.2fr_1.4fr_180px_1.5fr_auto] lg:items-center">
+        <form onSubmit={save} className="grid gap-4 border-t border-slate-100 px-5 py-5 lg:grid-cols-[1.2fr_1.2fr_1.2fr_180px_1.5fr_auto] lg:items-center">
             <div><p className="font-semibold text-slate-900">{user.name}{ownAccount && <span className="ml-2 text-xs font-normal text-slate-500">Você</span>}</p><p className="text-sm text-slate-500">{user.last_login_at ? `Último acesso: ${new Date(user.last_login_at).toLocaleString('pt-BR')}` : 'Ainda não acessou'}</p></div>
             <div><InputLabel htmlFor={`email-${user.id}`} value="E-mail" /><TextInput id={`email-${user.id}`} type="email" value={form.data.email} className="mt-1 block w-full" onChange={(e) => form.setData('email', e.target.value)} required /><InputError message={form.errors.email} className="mt-1" /></div>
-            <div><InputLabel htmlFor={`role-${user.id}`} value="Perfil" /><select id={`role-${user.id}`} value={form.data.role} disabled={ownAccount || user.role === 'master'} onChange={(e) => form.setData('role', e.target.value as 'admin' | 'user')} className="mt-1 block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-slate-100"><option value="user">Usuário</option><option value="admin">Administrador</option></select><InputError message={form.errors.role} className="mt-1" /></div>
+            <div><InputLabel htmlFor={`cpf-${user.id}`} value="CPF do membro" /><TextInput id={`cpf-${user.id}`} value={form.data.cpf} maxLength={14} inputMode="numeric" autoComplete="off" className="mt-1 block w-full" onChange={(e) => form.setData('cpf', e.target.value)} /><InputError message={form.errors.cpf} className="mt-1" /></div>
+            <div>{user.role === 'master' ? <><InputLabel value="Perfil" /><span className="mt-1 inline-flex rounded-md bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Master da plataforma</span></> : <><InputLabel htmlFor={`role-${user.id}`} value="Perfil" /><select id={`role-${user.id}`} value={form.data.role} disabled={ownAccount} onChange={(e) => form.setData('role', e.target.value as 'admin' | 'user')} className="mt-1 block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-slate-100"><option value="user">Usuário</option><option value="admin">Administrador</option></select><InputError message={form.errors.role} className="mt-1" /></>}</div>
             <div className="space-y-2"><InputLabel value="Permissões" />{Object.entries(permissionLabels).map(([key, label]) => <label key={key} className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={Boolean(form.data.permissions[key])} onChange={(e) => form.setData('permissions', { ...form.data.permissions, [key]: e.target.checked })} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />{label}</label>)}</div>
             <div className="flex flex-wrap gap-2 lg:flex-col"><PrimaryButton disabled={form.processing || user.role === 'master'}>Salvar</PrimaryButton>{!ownAccount && user.role !== 'master' && <button type="button" onClick={() => status.patch(route('company.users.status', user.id), { preserveScroll: true })} disabled={status.processing} className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">{user.is_active ? 'Desativar' : 'Ativar'}</button>}</div>
         </form>
@@ -48,7 +51,7 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
 }
 
 export default function Users({ users, auth, companies, selectedCompanyId }: { users: ManagedUser[]; auth: { user: { id: number; role?: string } }; companies: { id: number; name: string; document_type?: string | null; document_number?: string | null }[]; selectedCompanyId: number }) {
-    const form = useForm({ company_id: selectedCompanyId, name: '', email: '', role: 'user', password: '', password_confirmation: '', permissions: { can_manage_projects: false, can_view_reports: false } });
+    const form = useForm({ company_id: selectedCompanyId, name: '', email: '', cpf: '', role: 'user', password: '', password_confirmation: '', permissions: { can_manage_projects: false, can_view_reports: false } });
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
         form.post(route('company.users.store'), { preserveScroll: true, onSuccess: () => form.reset() });
@@ -71,6 +74,7 @@ export default function Users({ users, auth, companies, selectedCompanyId }: { u
                         {auth.user.role === 'master' && <input type="hidden" name="company_id" value={form.data.company_id} />}
                         <div><InputLabel htmlFor="new-name" value="Nome" /><TextInput id="new-name" value={form.data.name} className="mt-1 block w-full" onChange={(e) => form.setData('name', e.target.value)} required /><InputError message={form.errors.name} className="mt-1" /></div>
                         <div><InputLabel htmlFor="new-email" value="E-mail" /><TextInput id="new-email" type="email" value={form.data.email} className="mt-1 block w-full" onChange={(e) => form.setData('email', e.target.value)} required /><InputError message={form.errors.email} className="mt-1" /></div>
+                        <div><InputLabel htmlFor="new-cpf" value="CPF do membro (opcional)" /><TextInput id="new-cpf" value={form.data.cpf} maxLength={14} inputMode="numeric" autoComplete="off" className="mt-1 block w-full" onChange={(e) => form.setData('cpf', e.target.value)} /><InputError message={form.errors.cpf} className="mt-1" /></div>
                         <div><InputLabel htmlFor="new-role" value="Perfil" /><select id="new-role" value={form.data.role} onChange={(e) => form.setData('role', e.target.value)} className="mt-1 block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><option value="user">Usuário</option><option value="admin">Administrador</option></select></div>
                         <div className="flex flex-wrap items-end gap-4 pb-2">{Object.entries(permissionLabels).map(([key, label]) => <label key={key} className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.data.permissions[key as keyof typeof form.data.permissions]} onChange={(e) => form.setData('permissions', { ...form.data.permissions, [key]: e.target.checked })} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />{label}</label>)}</div>
                         <div><InputLabel htmlFor="new-password" value="Senha inicial (mínimo 12 caracteres)" /><TextInput id="new-password" type="password" value={form.data.password} className="mt-1 block w-full" onChange={(e) => form.setData('password', e.target.value)} required autoComplete="new-password" /><InputError message={form.errors.password} className="mt-1" /></div>

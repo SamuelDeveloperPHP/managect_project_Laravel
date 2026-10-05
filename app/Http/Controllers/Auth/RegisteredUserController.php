@@ -26,8 +26,6 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        abort_unless(app()->environment(['local', 'development', 'dev', 'testing']), 404);
-
         return Inertia::render('Auth/Register');
     }
 
@@ -38,20 +36,27 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(app()->environment(['local', 'development', 'dev', 'testing']), 404);
+        $request->merge([
+            'company_cnpj' => preg_replace('/\D+/', '', (string) $request->input('company_cnpj')),
+            'cpf' => preg_replace('/\D+/', '', (string) $request->input('cpf')),
+        ]);
 
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'company_name' => 'required|string|max:120',
-            'document_type' => ['required', Rule::in(['CNPJ', 'CPF'])],
-            'document_number' => ['required', 'string', 'max:18', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
-                if (! BrazilianTaxDocument::isValid((string) $request->input('document_type'), (string) $value)) {
-                    $fail('Informe um CNPJ ou CPF válido.');
+            'company_cnpj' => ['required', 'digits:14', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! BrazilianTaxDocument::isValid('CNPJ', (string) $value)) {
+                    $fail('Informe um CNPJ válido.');
                 }
-            }, Rule::unique('companies', 'document_number')->where('document_type', $request->input('document_type'))],
-            'email' => 'required|string|lowercase|email|max:190|unique:'.User::class,
+            }, Rule::unique('companies', 'document_number')->where('document_type', 'CNPJ')],
+            'cpf' => ['required', 'digits:11', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
+                    $fail('Informe um CPF válido.');
+                }
+            }, Rule::unique('users', 'cpf')],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:190', 'unique:'.User::class, Rule::notIn([User::PLATFORM_MASTER_EMAIL])],
             'secondary_recovery_email' => ['nullable', 'string', 'lowercase', 'email', 'max:190', 'different:email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::min(12)],
         ], [
             'secondary_recovery_email.different' => 'O e-mail de recuperação secundário deve ser diferente do e-mail do administrador.',
         ]);
@@ -65,13 +70,13 @@ class RegisteredUserController extends Controller
                 $slug = $baseSlug.'-'.$suffix++;
             }
 
-            $documentType = $request->string('document_type')->toString();
-            $documentNumber = preg_replace('/\D+/', '', (string) $request->input('document_number'));
+            $documentNumber = $data['company_cnpj'];
             $company = Company::create([
                 'name' => $request->string('company_name'),
                 'slug' => $slug,
-                'document_type' => $documentType,
+                'document_type' => 'CNPJ',
                 'document_number' => $documentNumber,
+                'cnpj' => $documentNumber,
                 'secondary_recovery_email' => $data['secondary_recovery_email'] ?? null,
                 'is_active' => true,
             ]);
@@ -80,6 +85,7 @@ class RegisteredUserController extends Controller
                 'company_id' => $company->id,
                 'name' => $request->name,
                 'email' => $request->email,
+                'cpf' => $data['cpf'],
                 'password' => Hash::make($request->password),
                 'role' => 'admin',
                 'permissions' => [],

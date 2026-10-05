@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
+    public const PLATFORM_MASTER_EMAIL = 'admin.master@phalcon.local';
+
+    public const PLATFORM_MASTER_COMPANY_ID = 2;
+
     /** @use HasFactory<UserFactory> */
     use AuditsChanges, HasFactory, Notifiable, SoftDeletes;
 
@@ -85,7 +89,38 @@ class User extends Authenticatable
 
     public function hasRole(string ...$roles): bool
     {
-        return in_array($this->role ?: 'user', $roles, true);
+        $role = $this->role ?: 'user';
+
+        if ($role === 'master' || $this->isPlatformMasterIdentity()) {
+            return $this->isPlatformMasterIdentity() && in_array('master', $roles, true);
+        }
+
+        return in_array($role, $roles, true);
+    }
+
+    public function isPlatformMasterIdentity(): bool
+    {
+        return mb_strtolower((string) $this->email) === self::PLATFORM_MASTER_EMAIL;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if ($user->isPlatformMasterIdentity()) {
+                if ($user->role !== 'master') {
+                    throw new \LogicException('A conta da plataforma deve manter o papel Master.');
+                }
+
+                $user->email = self::PLATFORM_MASTER_EMAIL;
+                $user->company_id = self::PLATFORM_MASTER_COMPANY_ID;
+                $user->permissions = [];
+                return;
+            }
+
+            if ($user->role === 'master') {
+                throw new \LogicException('O papel Master é reservado à conta '.self::PLATFORM_MASTER_EMAIL.'.');
+            }
+        });
     }
 
     public function hasPermission(string $permission): bool

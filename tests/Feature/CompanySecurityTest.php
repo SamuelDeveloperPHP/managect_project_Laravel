@@ -173,7 +173,12 @@ class CompanySecurityTest extends TestCase
     {
         $company = Company::factory()->create();
         $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
-        $master = User::factory()->create(['company_id' => $company->id, 'role' => 'master']);
+        Company::query()->find(2) ?? Company::factory()->create(['id' => 2]);
+        $master = User::factory()->create([
+            'company_id' => 2,
+            'email' => User::PLATFORM_MASTER_EMAIL,
+            'role' => 'master',
+        ]);
 
         $this->actingAs($admin)->put(route('company.users.update', $master), [
             'name' => 'Conta modificada',
@@ -211,9 +216,14 @@ class CompanySecurityTest extends TestCase
 
     public function test_master_can_select_a_tenant_for_user_administration(): void
     {
-        $homeCompany = Company::factory()->create();
+        Company::factory()->create();
+        $homeCompany = Company::factory()->create(['id' => 2]);
         $targetCompany = Company::factory()->create();
-        $master = User::factory()->create(['company_id' => $homeCompany->id, 'role' => 'master']);
+        $master = User::factory()->create([
+            'company_id' => 2,
+            'email' => User::PLATFORM_MASTER_EMAIL,
+            'role' => 'master',
+        ]);
         $targetUser = User::factory()->create(['company_id' => $targetCompany->id, 'name' => 'Pessoa da empresa B']);
 
         $this->actingAs($master)
@@ -275,8 +285,8 @@ class CompanySecurityTest extends TestCase
         $this->post('/register', [
             'name' => 'Responsável',
             'company_name' => 'Empresa CPF',
-            'document_type' => 'CPF',
-            'document_number' => '529.982.247-25',
+            'company_cnpj' => '11.222.333/0001-81',
+            'cpf' => '529.982.247-25',
             'email' => 'responsavel@example.test',
             'password' => 'long-secure-password',
             'password_confirmation' => 'long-secure-password',
@@ -302,7 +312,9 @@ class CompanySecurityTest extends TestCase
     {
         $company = Company::factory()->create();
         $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin', 'email' => 'admin@empresa.example']);
-        $payload = ['name' => 'Empresa', 'document_type' => 'CPF', 'document_number' => '529.982.247-25'];
+        $payload = [
+            'name' => 'Empresa', 'document_type' => 'CPF', 'document_number' => '529.982.247-25',
+        ];
 
         $this->actingAs($admin)->put(route('company.settings.update'), $payload + ['secondary_recovery_email' => 'ADMIN@empresa.example'])
             ->assertSessionHasErrors('secondary_recovery_email');

@@ -62,13 +62,21 @@ class LoginRequest extends FormRequest
         }
 
         $user = Auth::user();
-        if (! $user?->company?->is_active || $user->company->deleted_at !== null) {
+        $isPlatformMaster = $user?->isPlatformMasterIdentity();
+        $invalidMasterRole = $user?->role === 'master' && ! $isPlatformMaster;
+        $inactiveCompany = ! $isPlatformMaster && (! $user?->company?->is_active || $user?->company?->deleted_at !== null);
+        if (! $user || $invalidMasterRole || $inactiveCompany) {
             Auth::logout();
             $this->recordFailedAttempt();
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
+        }
+
+        if ($isPlatformMaster && $user->role !== 'master') {
+            $user->role = 'master';
+            $user->permissions = [];
         }
 
         $user->forceFill(['last_login_at' => now()])->save();
