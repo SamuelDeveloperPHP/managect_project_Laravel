@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             $company = Company::query()->firstOrFail();
             $user = User::query()->where('company_id', $company->id)->firstOrFail();
         } else {
-            $company = Company::firstOrCreate(['slug' => 'demo-managect'], ['name' => 'Empresa Demo ManageCT']);
+            $company = Company::firstOrCreate(['slug' => 'demo-managect'], ['name' => 'Empresa Demo Trilha+']);
             $user = User::factory()->create([
                 'company_id' => $company->id,
                 'name' => 'Test User',

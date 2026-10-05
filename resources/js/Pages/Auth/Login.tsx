@@ -20,7 +20,7 @@ export default function Login({ status, canResetPassword, canRegister }: { statu
     return (
         <GuestLayout>
             <Head title="Entrar">
-                <meta name="description" content="Acesse o Trilha para acompanhar os projetos e as tarefas da sua empresa." />
+                <meta name="description" content="Acesse o Trilha+ para acompanhar os projetos e as tarefas da sua empresa." />
             </Head>
 
             <div className="mb-7">

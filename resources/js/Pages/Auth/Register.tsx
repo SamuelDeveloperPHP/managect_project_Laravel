@@ -26,13 +26,13 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Cadastrar empresa · Trilha">
-                <meta name="description" content="Cadastre sua empresa e crie o acesso do administrador principal da Trilha." />
+            <Head title="Cadastrar empresa · Trilha+">
+                <meta name="description" content="Cadastre sua empresa e crie o acesso do administrador principal da Trilha+." />
             </Head>
 
             <div className="mb-7">
                 <p className="text-xs font-extrabold uppercase tracking-[.16em] text-blue-700">Comece pela sua empresa</p>
-                <h1 className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">Criar conta na Trilha</h1>
+                <h1 className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">Criar conta na Trilha+</h1>
                 <p className="mt-2 text-sm leading-6 text-slate-500">Cadastre a empresa e os dados do administrador principal. Os documentos são validados e vinculados à conta.</p>
             </div>
 

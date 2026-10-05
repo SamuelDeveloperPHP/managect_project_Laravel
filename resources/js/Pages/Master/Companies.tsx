@@ -29,7 +29,7 @@ export default function Companies({ companies, filters, selectedCompanyId, sessi
     const openCompany = (companyId: number | null) => router.post(route('master.companies.select'), { company_id: companyId });
     const toggleCompany = (company: CompanyRow) => router.patch(route('master.companies.status', company.id), { is_active: !company.is_active }, { preserveScroll: true });
 
-    return <AuthenticatedLayout header={<div><p className="text-sm font-medium text-indigo-600">Trilha · Administração Master</p><h2 className="text-2xl font-semibold text-slate-900">Empresas</h2></div>}>
+    return <AuthenticatedLayout header={<div><p className="text-sm font-medium text-indigo-600">Trilha+ · Administração Master</p><h2 className="text-2xl font-semibold text-slate-900">Empresas</h2></div>}>
         <Head title="Empresas · Master" />
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
             {success && <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div>}

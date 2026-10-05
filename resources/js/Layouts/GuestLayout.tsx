@@ -12,9 +12,9 @@ export default function Guest({ children }: PropsWithChildren) {
                 <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-96 w-96 rounded-full border border-blue-400/20" />
                 <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-72 w-72 rounded-full border border-blue-400/20" />
 
-                <Link href="/" className="relative z-10 inline-flex w-fit items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-300" aria-label="Trilha — página inicial">
+                <Link href="/" className="relative z-10 inline-flex w-fit items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-300" aria-label="Trilha+ — página inicial">
                     <ApplicationLogo className="h-11 w-11" />
-                    <span className="text-lg font-extrabold tracking-tight">Trilha</span>
+                    <span className="text-lg font-extrabold tracking-tight">Trilha+</span>
                 </Link>
 
                 <div className="relative z-10 hidden max-w-xl py-12 lg:block">
@@ -32,7 +32,7 @@ export default function Guest({ children }: PropsWithChildren) {
                         <div className="mt-4 space-y-3">
                             <div className="flex items-center gap-3 rounded-lg bg-slate-900/70 px-3 py-3"><span className="h-2 w-2 rounded-full bg-blue-400" /><span className="flex-1 text-sm text-slate-200">Projetos e cronogramas</span><span className="text-xs text-slate-500">Acompanhar</span></div>
                             <div className="flex items-center gap-3 rounded-lg bg-slate-900/70 px-3 py-3"><span className="h-2 w-2 rounded-full bg-violet-400" /><span className="flex-1 text-sm text-slate-200">Perfis e permissões</span><span className="text-xs text-slate-500">Administrar</span></div>
-                            <div className="flex items-center gap-3 rounded-lg bg-slate-900/70 px-3 py-3"><span className="h-2 w-2 rounded-full bg-emerald-400" /><span className="flex-1 text-sm text-slate-200">Trilha de atividade</span><span className="text-xs text-slate-500">Consultar</span></div>
+                            <div className="flex items-center gap-3 rounded-lg bg-slate-900/70 px-3 py-3"><span className="h-2 w-2 rounded-full bg-emerald-400" /><span className="flex-1 text-sm text-slate-200">Trilha+ de atividade</span><span className="text-xs text-slate-500">Consultar</span></div>
                         </div>
                     </div>
                 </div>
@@ -48,7 +48,7 @@ export default function Guest({ children }: PropsWithChildren) {
                         {children}
                     </section>
                     <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-slate-500">
-                        <span>© {new Date().getFullYear()} Trilha</span>
+                        <span>© {new Date().getFullYear()} Trilha+</span>
                         <Link href="/" className="font-semibold text-slate-600 transition hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Página inicial</Link>
                     </footer>
                 </div>
