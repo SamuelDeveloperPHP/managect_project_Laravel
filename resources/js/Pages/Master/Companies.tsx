@@ -3,7 +3,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
 type CompanyRow = {
@@ -16,6 +16,7 @@ type CompanyRow = {
 export default function Companies({ companies, filters, selectedCompanyId, sessionTrackingAvailable, success }: {
     companies: CompanyRow[]; filters: { q: string }; selectedCompanyId: number | null; sessionTrackingAvailable: boolean; success?: string | null;
 }) {
+    const pageErrors = usePage().props.errors as Record<string, string> | undefined;
     const [search, setSearch] = useState(filters.q ?? '');
     const form = useForm({ name: '', document_type: 'CNPJ', document_number: '', domain: '' });
     const findCompanies = (event: FormEvent) => {
@@ -32,6 +33,7 @@ export default function Companies({ companies, filters, selectedCompanyId, sessi
     return <AuthenticatedLayout header={<div><h2 className="text-2xl font-semibold text-slate-900">Empresas</h2></div>}>
         <Head title="Empresas · Master" />
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+            {pageErrors?.company && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{pageErrors.company}</div>}
             {success && <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div>}
             <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-lg font-semibold text-slate-900">Empresas cadastradas</h1><p className="mt-1 text-sm text-slate-500">Abra uma empresa para navegar pelos projetos, equipe, configuração e auditoria no escopo dela.</p></div><button onClick={() => openCompany(null)} className={`rounded-lg border px-4 py-2 text-sm font-semibold ${selectedCompanyId === null ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>{selectedCompanyId === null ? 'Visão global ativa' : 'Voltar à visão global'}</button></div>
 

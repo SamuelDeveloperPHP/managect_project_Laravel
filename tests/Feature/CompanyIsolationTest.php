@@ -72,6 +72,20 @@ class CompanyIsolationTest extends TestCase
         $this->actingAs($master)->get(route('projects.edit', $projectB))->assertOk();
     }
 
+
+    public function test_backlog_code_is_generated_when_omitted_and_stays_unique(): void
+    {
+        [, $user, $project] = $this->companyWithProject('empresa-a', 'Empresa A');
+
+        $this->actingAs($user)->post(route('projects.backlog.store', $project), ['name' => 'Segundo'])->assertSessionHasNoErrors();
+        $this->post(route('projects.backlog.store', $project), ['name' => 'Terceiro'])->assertSessionHasNoErrors();
+        $this->post(route('projects.backlog.store', $project), ['code' => 'custom', 'name' => 'Manual'])->assertSessionHasNoErrors();
+        $this->post(route('projects.backlog.store', $project), ['code' => 'CUSTOM', 'name' => 'Repetido'])->assertSessionHasErrors('code');
+
+        $codes = ProjectBacklog::withoutGlobalScopes()->where('project_id', $project->id)->orderBy('id')->pluck('code')->all();
+        $this->assertSame(['BL-GERAL', 'BL-02', 'BL-03', 'CUSTOM'], $codes);
+    }
+
     private function companyWithProject(string $slug, string $name): array
     {
         $company = Company::create(compact('slug', 'name'));

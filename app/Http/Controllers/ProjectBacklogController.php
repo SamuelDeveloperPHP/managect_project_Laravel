@@ -33,14 +33,27 @@ class ProjectBacklogController extends Controller
     {
         $project = Project::query()->findOrFail($project);
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:40', Rule::unique('project_backlogs')->where('company_id', $project->company_id)->where('project_id', $project->id)],
+            'code' => ['nullable', 'string', 'max:40', Rule::unique('project_backlogs')->where('company_id', $project->company_id)->where('project_id', $project->id)],
             'name' => ['required', 'string', 'max:160'],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $data['code'] = filled($data['code'] ?? null) ? mb_strtoupper(trim($data['code'])) : $this->nextBacklogCode($project);
+
         $project->backlogs()->create($data + ['company_id' => $project->company_id]);
 
         return back()->with('success', 'Backlog criado dentro do projeto.');
+    }
+
+    private function nextBacklogCode(Project $project): string
+    {
+        $number = $project->backlogs()->count() + 1;
+
+        do {
+            $code = sprintf('BL-%02d', $number++);
+        } while ($project->backlogs()->where('code', $code)->exists());
+
+        return $code;
     }
 
     public function show(int $project, int $backlog): Response

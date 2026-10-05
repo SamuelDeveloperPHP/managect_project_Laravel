@@ -55,7 +55,7 @@ class ProjectManagementTest extends TestCase
 
         $this->actingAs($admin)->put(route('projects.update', $project), [
             'name' => 'Projeto', 'status' => 'active', 'priority' => 'medium',
-            'attachments' => [UploadedFile::fake()->create('escopo.pdf', 20, 'application/pdf')],
+            'attachments' => [UploadedFile::fake()->create('escopo.txt', 20, 'text/plain')],
         ])->assertSessionHasNoErrors();
 
         $attachment = ProjectAttachment::query()->where('project_id', $project->id)->firstOrFail();
