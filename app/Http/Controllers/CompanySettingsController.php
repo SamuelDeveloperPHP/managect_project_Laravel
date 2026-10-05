@@ -25,8 +25,9 @@ class CompanySettingsController extends Controller
         $profile = $company->only([
             'id', 'name', 'document_type', 'document_number', 'cnpj', 'domain', 'zip_code', 'street', 'number',
             'complement', 'neighborhood', 'city', 'state', 'contact_name', 'contact_email', 'contact_whatsapp',
-            'admin_recovery_email', 'secondary_recovery_email',
+            'secondary_recovery_email',
         ]);
+        $profile['administrator_emails'] = $company->administratorEmails();
         if (! $profile['document_number'] && $profile['cnpj']) {
             $profile['document_type'] = 'CNPJ';
             $profile['document_number'] = preg_replace('/\D+/', '', $profile['cnpj']);
@@ -65,14 +66,10 @@ class CompanySettingsController extends Controller
             'contact_name' => ['nullable', 'string', 'max:120'],
             'contact_email' => ['nullable', 'email', 'max:190'],
             'contact_whatsapp' => ['nullable', 'string', 'max:30'],
-            'admin_recovery_email' => ['nullable', 'email', 'max:190', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
-                $this->validateRecoveryDomain($value, $request->input('domain'), $fail);
-            }],
-            'secondary_recovery_email' => ['nullable', 'email', 'max:190', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
-                if (is_string($value) && mb_strtolower($value) === mb_strtolower((string) $request->input('admin_recovery_email'))) {
-                    $fail('O e-mail secundário deve ser diferente do e-mail principal.');
+            'secondary_recovery_email' => ['nullable', 'email', 'max:190', function (string $attribute, mixed $value, \Closure $fail) use ($company): void {
+                if (is_string($value) && in_array(mb_strtolower($value), $company->administratorEmails(), true)) {
+                    $fail('O e-mail de recuperação secundário deve ser diferente do e-mail do administrador.');
                 }
-                $this->validateRecoveryDomain($value, $request->input('domain'), $fail);
             }],
             'zip_code' => ['nullable', 'string', 'max:12'],
             'street' => ['nullable', 'string', 'max:190'],
@@ -93,7 +90,6 @@ class CompanySettingsController extends Controller
             'contact_name' => $data['contact_name'] ?? null,
             'contact_email' => isset($data['contact_email']) ? mb_strtolower($data['contact_email']) : null,
             'contact_whatsapp' => $data['contact_whatsapp'] ?? null,
-            'admin_recovery_email' => isset($data['admin_recovery_email']) ? mb_strtolower($data['admin_recovery_email']) : null,
             'secondary_recovery_email' => isset($data['secondary_recovery_email']) ? mb_strtolower($data['secondary_recovery_email']) : null,
             'zip_code' => $data['zip_code'] ?? null,
             'street' => $data['street'] ?? null,
@@ -176,16 +172,5 @@ class CompanySettingsController extends Controller
         $companyId = $request->integer('company_id') ?: (int) $request->session()->get('master_company_id', $request->user()->company_id);
 
         return Company::query()->findOrFail($companyId);
-    }
-
-    private function validateRecoveryDomain(mixed $email, mixed $domain, \Closure $fail): void
-    {
-        if (! is_string($email) || $email === '' || ! is_string($domain) || $domain === '') {
-            return;
-        }
-
-        if (mb_strtolower((string) strrchr($email, '@')) !== '@'.mb_strtolower($domain)) {
-            $fail('Os e-mails de recuperação devem pertencer ao domínio cadastrado da empresa.');
-        }
     }
 }

@@ -49,6 +49,10 @@ class CompanyAccessController extends Controller
             : (int) $request->user()->company_id;
         abort_unless($companyId > 0, 422, 'Selecione a empresa de destino.');
 
+        if ($data['role'] === 'admin') {
+            $this->assertDistinctFromRecoveryEmail($companyId, $data['email']);
+        }
+
         $user = User::create([
             'company_id' => $companyId,
             'name' => $data['name'],
@@ -78,6 +82,9 @@ class CompanyAccessController extends Controller
         }
 
         $this->protectLastAdmin($target, $data['role'], $target->is_active);
+        if ($data['role'] === 'admin') {
+            $this->assertDistinctFromRecoveryEmail((int) $target->company_id, $data['email']);
+        }
 
         $target->fill([
             'name' => $data['name'],
@@ -176,6 +183,17 @@ class CompanyAccessController extends Controller
         abort_unless(Company::query()->whereKey($companyId)->exists(), 404);
 
         return $companyId;
+    }
+
+    private function assertDistinctFromRecoveryEmail(int $companyId, string $email): void
+    {
+        $secondary = Company::query()->whereKey($companyId)->value('secondary_recovery_email');
+
+        if ($secondary && mb_strtolower($secondary) === mb_strtolower($email)) {
+            throw ValidationException::withMessages([
+                'email' => 'O e-mail do administrador deve ser diferente do e-mail de recuperação secundário da empresa.',
+            ]);
+        }
     }
 
     private function protectLastAdmin(User $target, string $newRole, bool $newActive): void

@@ -59,6 +59,25 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Password recovery for a company administrator goes to the login e-mail and,
+     * when configured, to the company's distinct secondary recovery e-mail.
+     *
+     * @return string|list<string>
+     */
+    public function routeNotificationForMail(mixed $notification = null): string|array
+    {
+        $secondary = $this->role === 'admin' && $notification instanceof \Illuminate\Auth\Notifications\ResetPassword
+            ? $this->company?->secondary_recovery_email
+            : null;
+
+        if ($secondary && mb_strtolower($secondary) !== mb_strtolower($this->email)) {
+            return [$this->email, $secondary];
+        }
+
+        return $this->email;
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);

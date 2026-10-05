@@ -13,6 +13,7 @@ export default function Register() {
         document_type: 'CNPJ',
         document_number: '',
         email: '',
+        secondary_recovery_email: '',
         password: '',
         password_confirmation: '',
     });
@@ -94,6 +95,23 @@ export default function Register() {
                     />
 
                     <InputError message={errors.email} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="secondary_recovery_email" value="Segundo e-mail de recuperação (opcional)" />
+
+                    <TextInput
+                        id="secondary_recovery_email"
+                        type="email"
+                        name="secondary_recovery_email"
+                        value={data.secondary_recovery_email}
+                        className="mt-1 block w-full"
+                        autoComplete="off"
+                        onChange={(e) => setData('secondary_recovery_email', e.target.value)}
+                    />
+
+                    <p className="mt-1 text-xs text-gray-500">Deve ser diferente do e-mail do administrador.</p>
+                    <InputError message={errors.secondary_recovery_email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
