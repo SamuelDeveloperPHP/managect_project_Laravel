@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\ProjectAttachment;
 use App\Models\User;
+use App\Services\PdfSafetyScanner;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Throwable;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +27,11 @@ class ProjectController extends Controller
         'on_hold' => 'Pausado', 'completed' => 'Concluído', 'cancelled' => 'Cancelado',
     ];
 
+    private const MAX_ATTACHMENTS = 5;
+
+    /** Image plus attachments of one project may not exceed this many bytes. */
+    public const MAX_PROJECT_FILES_BYTES = 50 * 1024 * 1024;
+
     private const PRIORITIES = ['low' => 'Baixa', 'medium' => 'Média', 'high' => 'Alta', 'critical' => 'Crítica'];
 
     public function index(Request $request): Response
@@ -37,16 +44,24 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
+        if ($redirect = $this->requireActiveCompany()) {
+            return $redirect;
+        }
+
         return Inertia::render('Projects/Form', [
-            'mode' => 'create', 'project' => null, 'members' => $this->teamMembers(),
+            'mode' => 'create', 'project' => null, 'members' => $this->teamMembers(), 'filesLimitBytes' => self::MAX_PROJECT_FILES_BYTES, 'filesUsedBytes' => 0,
             'statuses' => self::STATUSES, 'priorities' => self::PRIORITIES,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        if ($redirect = $this->requireActiveCompany()) {
+            return $redirect;
+        }
+
         $data = $this->validatedProject($request);
         $memberIds = $this->memberIds($data);
         unset($data['member_ids'], $data['image'], $data['attachments']);
@@ -90,7 +105,8 @@ class ProjectController extends Controller
                     'id' => $file->id, 'name' => $file->original_name, 'size_bytes' => $file->size_bytes,
                 ])->all(), 'backlogs_count' => $project->backlogs_count, 'tasks_count' => $project->tasks_count,
             ],
-            'members' => $this->teamMembers(), 'statuses' => self::STATUSES, 'priorities' => self::PRIORITIES,
+            'members' => $this->teamMembers($project), 'statuses' => self::STATUSES, 'priorities' => self::PRIORITIES,
+            'filesLimitBytes' => self::MAX_PROJECT_FILES_BYTES, 'filesUsedBytes' => $this->projectFilesBytes($project),
         ]);
     }
 
@@ -149,7 +165,7 @@ class ProjectController extends Controller
 
     private function validatedProject(Request $request, ?Project $project = null): array
     {
-        $companyId = app(TenantContext::class)->companyId();
+        $companyId = $project?->company_id ?? app(TenantContext::class)->companyId();
         $userRule = Rule::exists('users', 'id')->where(fn ($query) => $query->where('company_id', $companyId)->where('is_active', true)->whereNull('deleted_at'));
 
         $data = $request->validate([
@@ -165,18 +181,17 @@ class ProjectController extends Controller
             'leader_id' => ['nullable', 'integer', $userRule],
             'member_ids' => ['nullable', 'array', 'max:100'],
             'member_ids.*' => ['integer', 'distinct', $userRule],
-            'image' => ['nullable', 'image', 'max:4096'],
-            'attachments' => ['nullable', 'array', 'max:5'],
-            'attachments.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg,zip', 'max:10240'],
+            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'attachments' => ['nullable', 'array', 'max:'.self::MAX_ATTACHMENTS],
+            'attachments.*' => ['file', 'mimes:pdf,csv,txt,png,jpg,jpeg', 'max:10240'],
         ], [
             'deadline.after_or_equal' => 'O prazo deve ser igual ou posterior à data de início.',
-            'image.image' => 'Envie um arquivo de imagem válido.',
+            'image.mimes' => 'A imagem deve estar em JPG, PNG ou WebP.',
+            'attachments.*.mimes' => 'Os anexos podem ser PDF, CSV, TXT, PNG ou JPG.',
             'attachments.*.max' => 'Cada anexo pode ter no máximo 10 MB.',
         ]);
 
-        if ($project && count($data['attachments'] ?? []) + $project->attachments()->count() > 5) {
-            throw ValidationException::withMessages(['attachments' => 'Um projeto pode ter no máximo 5 anexos. Remova um arquivo antes de enviar outro.']);
-        }
+        $this->assertFilesWithinLimits($request, $project);
 
         return $data;
     }
@@ -190,9 +205,61 @@ class ProjectController extends Controller
         return array_values(array_unique($ids));
     }
 
-    private function teamMembers(): array
+    private function requireActiveCompany(): ?RedirectResponse
     {
-        return User::query()->where('company_id', app(TenantContext::class)->companyId())
+        if (app(TenantContext::class)->companyId() !== null) {
+            return null;
+        }
+
+        return redirect()->route('master.companies.index')
+            ->withErrors(['company' => 'Selecione a empresa em que o projeto será criado.']);
+    }
+
+    private function assertFilesWithinLimits(Request $request, ?Project $project): void
+    {
+        $attachments = array_values(array_filter($request->file('attachments', []), fn ($file) => $file instanceof UploadedFile));
+
+        if (count($attachments) + ($project?->attachments()->count() ?? 0) > self::MAX_ATTACHMENTS) {
+            throw ValidationException::withMessages(['attachments' => 'Um projeto pode ter no máximo '.self::MAX_ATTACHMENTS.' anexos. Remova um arquivo antes de enviar outro.']);
+        }
+
+        $image = $request->file('image');
+        $used = $project ? $this->projectFilesBytes($project, withoutImage: $image instanceof UploadedFile) : 0;
+        $incoming = array_sum(array_map(fn (UploadedFile $file) => (int) $file->getSize(), $attachments))
+            + ($image instanceof UploadedFile ? (int) $image->getSize() : 0);
+
+        if ($used + $incoming > self::MAX_PROJECT_FILES_BYTES) {
+            throw ValidationException::withMessages(['attachments' => sprintf(
+                'Os arquivos do projeto somam no máximo %d MB. Este envio ultrapassa o limite (já usado: %s MB).',
+                self::MAX_PROJECT_FILES_BYTES / 1048576,
+                number_format($used / 1048576, 1, ',', '.'),
+            )]);
+        }
+
+        $pdfs = array_filter($attachments, fn (UploadedFile $file) => strtolower($file->getClientOriginalExtension()) === 'pdf');
+        foreach ($pdfs as $pdf) {
+            try {
+                app(PdfSafetyScanner::class)->assertSafe($pdf);
+            } catch (RuntimeException $exception) {
+                throw ValidationException::withMessages(['attachments' => $exception->getMessage()]);
+            }
+        }
+    }
+
+    private function projectFilesBytes(Project $project, bool $withoutImage = false): int
+    {
+        $bytes = (int) $project->attachments()->sum('size_bytes');
+
+        if (! $withoutImage && $project->image_path && Storage::disk('public')->exists($project->image_path)) {
+            $bytes += (int) Storage::disk('public')->size($project->image_path);
+        }
+
+        return $bytes;
+    }
+
+    private function teamMembers(?Project $project = null): array
+    {
+        return User::query()->where('company_id', $project?->company_id ?? app(TenantContext::class)->companyId())
             ->where('is_active', true)->orderBy('name')->get(['id', 'name', 'email'])->toArray();
     }
 

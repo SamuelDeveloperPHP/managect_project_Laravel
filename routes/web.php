@@ -44,9 +44,9 @@ Route::get('/company/versions', [ReleaseVersionController::class, 'index'])
 Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(function () {
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/projects/create', [ProjectController::class, 'create'])->middleware('permission:can_manage_projects')->name('projects.create');
-    Route::post('/projects', [ProjectController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.store');
+    Route::post('/projects', [ProjectController::class, 'store'])->middleware(['permission:can_manage_projects', 'throttle:sensitive-account-action'])->name('projects.store');
     Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->middleware('permission:can_manage_projects')->name('projects.edit');
-    Route::put('/projects/{project}', [ProjectController::class, 'update'])->middleware('permission:can_manage_projects')->name('projects.update');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->middleware(['permission:can_manage_projects', 'throttle:sensitive-account-action'])->name('projects.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->middleware('permission:can_manage_projects')->name('projects.destroy');
     Route::get('/projects/{project}/attachments/{attachment}', [ProjectController::class, 'downloadAttachment'])->name('projects.attachments.download');
     Route::delete('/projects/{project}/attachments/{attachment}', [ProjectController::class, 'destroyAttachment'])->middleware('permission:can_manage_projects')->name('projects.attachments.destroy');
