@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', fn () => Inertia::render('Welcome', [
-    'canRegister' => app()->environment(['local', 'development', 'dev', 'testing']),
+    'canRegister' => true,
 ]))->name('home');
 
 Route::get('/dashboard', AdminDashboardController::class)
@@ -32,20 +32,34 @@ Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(func
 
 Route::prefix('master')->name('master.')->middleware(['auth', 'company', 'role:master', 'throttle:authenticated-web'])->group(function () {
     Route::get('/companies', [MasterCompaniesController::class, 'index'])->name('companies.index');
+    Route::post('/companies', [MasterCompaniesController::class, 'store'])->name('companies.store');
+    Route::patch('/companies/{company}/status', [MasterCompaniesController::class, 'setActive'])->name('companies.status');
     Route::post('/companies/select', [MasterCompaniesController::class, 'select'])->name('companies.select');
 });
 
+Route::get('/company/versions', [ReleaseVersionController::class, 'index'])
+    ->middleware('throttle:60,1')
+    ->name('company.versions.index');
+
 Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(function () {
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/create', [ProjectController::class, 'create'])->middleware('permission:can_manage_projects')->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.store');
-    Route::get('/projects/{project}/backlog', [ProjectBacklogController::class, 'index'])->name('projects.backlog.index');
-    Route::get('/projects/{project}/timeline', [GanttTaskController::class, 'index'])->name('projects.timeline.index');
+    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->middleware('permission:can_manage_projects')->name('projects.edit');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->middleware('permission:can_manage_projects')->name('projects.update');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->middleware('permission:can_manage_projects')->name('projects.destroy');
+    Route::get('/projects/{project}/attachments/{attachment}', [ProjectController::class, 'downloadAttachment'])->name('projects.attachments.download');
+    Route::delete('/projects/{project}/attachments/{attachment}', [ProjectController::class, 'destroyAttachment'])->middleware('permission:can_manage_projects')->name('projects.attachments.destroy');
+    Route::get('/projects/{project}/backlogs', [ProjectBacklogController::class, 'index'])->name('projects.backlog.index');
+    Route::post('/projects/{project}/backlogs', [ProjectBacklogController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.backlog.store');
+    Route::get('/projects/{project}/backlogs/{backlog}', [ProjectBacklogController::class, 'show'])->name('projects.backlog.show');
+    Route::post('/projects/{project}/backlogs/{backlog}/items', [ProjectBacklogController::class, 'storeItem'])->middleware('permission:can_manage_projects')->name('projects.backlog.items.store');
+    Route::patch('/projects/{project}/backlogs/{backlog}/items/{item}/status', [ProjectBacklogController::class, 'updateStatus'])->middleware('permission:can_manage_projects')->name('projects.backlog.items.status');
+    Route::put('/projects/{project}/backlogs/{backlog}/items/{item}/gantt-tasks', [ProjectBacklogController::class, 'syncGanttTasks'])->middleware('permission:can_manage_projects')->name('projects.backlog.items.gantt-tasks.sync');
+    Route::get('/projects/{project}/backlogs/{backlog}/timeline', [GanttTaskController::class, 'index'])->name('projects.timeline.index');
     Route::get('/projects/{project}/overview', [ProjectOverviewController::class, 'show'])->name('projects.overview');
-    Route::post('/projects/{project}/backlog', [ProjectBacklogController::class, 'store'])->middleware('permission:can_manage_projects')->name('projects.backlog.store');
-    Route::patch('/projects/{project}/backlog/{item}/status', [ProjectBacklogController::class, 'updateStatus'])->middleware('permission:can_manage_projects')->name('projects.backlog.status');
-    Route::put('/projects/{project}/backlog/{item}/gantt-tasks', [ProjectBacklogController::class, 'syncGanttTasks'])->middleware('permission:can_manage_projects')->name('projects.backlog.gantt-tasks.sync');
-    Route::get('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'show'])->name('projects.gantt.show');
-    Route::post('/api/projects/{project}/gantt', [ProjectGanttApiController::class, 'save'])->middleware('permission:can_manage_projects')->name('projects.gantt.save');
+    Route::get('/api/projects/{project}/backlogs/{backlog}/gantt', [ProjectGanttApiController::class, 'show'])->name('projects.gantt.show');
+    Route::post('/api/projects/{project}/backlogs/{backlog}/gantt', [ProjectGanttApiController::class, 'save'])->middleware('permission:can_manage_projects')->name('projects.gantt.save');
 });
 
 Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role:admin,master', 'throttle:authenticated-web'])->group(function () {
@@ -59,7 +73,6 @@ Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role
     Route::put('/users/{user}', [CompanyAccessController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/status', [CompanyAccessController::class, 'setActive'])->name('users.status');
     Route::get('/audit', [CompanyAccessController::class, 'audit'])->name('audit.index');
-    Route::get('/versions', [ReleaseVersionController::class, 'index'])->name('versions.index');
 });
 
 require __DIR__.'/auth.php';

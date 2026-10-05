@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\Project;
+use App\Models\ProjectBacklog;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,9 +30,9 @@ class CompanyIsolationTest extends TestCase
 
     public function test_item_created_in_project_receives_the_authenticated_company(): void
     {
-        [$company, $user, $project] = $this->companyWithProject('empresa-a', 'Empresa A');
+        [$company, $user, $project, $backlog] = $this->companyWithProject('empresa-a', 'Empresa A');
 
-        $this->actingAs($user)->post(route('projects.backlog.store', $project), [
+        $this->actingAs($user)->post(route('projects.backlog.items.store', [$project, $backlog]), [
             'code' => 'BL-01-01',
             'epic' => 'Plataforma',
             'title' => 'Isolamento por empresa',
@@ -42,8 +43,19 @@ class CompanyIsolationTest extends TestCase
         $this->assertDatabaseHas('project_backlog_items', [
             'company_id' => $company->id,
             'project_id' => $project->id,
+            'project_backlog_id' => $backlog->id,
             'code' => 'BL-01-01',
         ]);
+    }
+
+    public function test_backlog_is_a_separate_area_inside_the_project(): void
+    {
+        [, $user, $project] = $this->companyWithProject('empresa-a', 'Empresa A');
+
+        $this->actingAs($user)->post(route('projects.backlog.store', $project), ['code' => 'BL-NOVO', 'name' => 'Backlog novo'])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('project_backlogs', ['project_id' => $project->id, 'code' => 'BL-NOVO']);
     }
 
     private function companyWithProject(string $slug, string $name): array
@@ -53,6 +65,8 @@ class CompanyIsolationTest extends TestCase
         app(TenantContext::class)->setCompanyId($company->id);
         $project = Project::create(['name' => 'Projeto '.$name, 'code' => strtoupper($slug), 'created_by' => $user->id]);
 
-        return [$company, $user, $project];
+        $backlog = ProjectBacklog::create(['company_id' => $company->id, 'project_id' => $project->id, 'code' => 'BL-GERAL', 'name' => 'Backlog geral']);
+
+        return [$company, $user, $project, $backlog];
     }
 }

@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 type Project = { id: number; name: string; code: string; status: string; start_date: string | null; deadline: string | null };
+type Backlog = { id: number; name: string; code: string };
 type GanttWindow = Window & { saveGanttOnServer?: () => void; __managectGanttAssets?: Promise<void> };
 
 const ganttStyles = [
@@ -77,9 +78,10 @@ function loadGanttAssets(): Promise<void> {
     return appWindow.__managectGanttAssets;
 }
 
-export default function Timeline({ project, canManage, ganttTemplates }: { project: Project; canManage: boolean; ganttTemplates: string }) {
+export default function Timeline({ project, backlog, canManage, ganttTemplates }: { project: Project; backlog: Backlog; canManage: boolean; ganttTemplates: string }) {
     useEffect(() => {
         document.body.dataset.projectId = String(project.id);
+        document.body.dataset.backlogId = String(backlog.id);
         loadGanttAssets()
             .then(() => document.dispatchEvent(new Event('managect:gantt:load')))
             .catch((error: Error) => {
@@ -90,21 +92,21 @@ export default function Timeline({ project, canManage, ganttTemplates }: { proje
                     toast.style.display = 'block';
                 }
             });
-    }, [project.id]);
+    }, [project.id, backlog.id]);
 
     return <>
         <Head title={`${project.code} — Cronograma`} />
         <div className="gantt-screen fixed inset-0 z-50 flex h-screen h-[100dvh] flex-col overflow-hidden bg-[#f5f6fa]">
             <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
                 <div className="flex min-w-0 items-center gap-3">
-                    <Link href={route('projects.overview', project.id)} aria-label="Voltar à visão geral do projeto" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+                    <Link href={route('projects.backlog.show', [project.id, backlog.id])} aria-label="Voltar ao backlog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h11" /></svg>
                     </Link>
                     <span className="h-7 w-px shrink-0 bg-slate-200" />
-                    <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{project.code} · Gantt</p><h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">{project.name}</h1></div>
+                    <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{project.code} · {backlog.code} · Gantt</p><h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">{backlog.name}</h1></div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                    <Link href={route('projects.overview', project.id)} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 sm:inline-flex">Visão geral</Link>
+                    <Link href={route('projects.overview', project.id)} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 sm:inline-flex">Projeto</Link>
                     {canManage && <button type="button" onClick={() => (window as GanttWindow).saveGanttOnServer?.()} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 sm:px-4 sm:text-sm">Salvar</button>}
                 </div>
             </header>

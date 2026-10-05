@@ -72,6 +72,7 @@ class ImportPhalconProjects extends Command
 
                 foreach ($tasks as $row) {
                     $projectId = $row['project_id'] === null ? null : ($projectMap[(int) $row['project_id']] ?? null);
+                    $backlogId = $projectId === null ? null : DB::table('project_backlogs')->where('project_id', $projectId)->orderBy('id')->value('id');
                     $existingTask = DB::table('gantt_tasks')->where('phalcon_id', $row['id'])->first();
                     if ($existingTask) {
                         $insertedTasks++;
@@ -79,7 +80,7 @@ class ImportPhalconProjects extends Command
                     }
                     $legacyTask = DB::table('gantt_tasks')->where('id', $row['id'])->first();
                     $taskData = [
-                        'phalcon_id' => $row['id'], 'company_id' => $row['company_id'], 'project_id' => $projectId,
+                        'phalcon_id' => $row['id'], 'company_id' => $row['company_id'], 'project_id' => $projectId, 'project_backlog_id' => $backlogId,
                         'code' => $row['code'], 'name' => $row['name'], 'description' => $row['description'], 'level' => $row['level'],
                         'status' => $row['status'], 'progress' => $row['progress'], 'start_at' => $row['start_at'], 'end_at' => $row['end_at'],
                         'duration' => max(1, (int) $row['duration']), 'depends' => $row['depends'], 'sort_order' => $row['sort_order'],
