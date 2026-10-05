@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "nexcore/managect-project-laravel",
     "type": "project",
-    "description": "Laravel migration of the ManageCT multi-tenant project management platform.",
+    "description": "Laravel migration of the Trilha+ multi-tenant project management platform.",
     "keywords": ["laravel", "project-management", "gantt", "multi-tenant", "saas"],
     "license": "proprietary",
     "require": {

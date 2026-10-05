@@ -9,19 +9,19 @@ type WelcomeProps = {
 export default function Welcome({ canRegister, auth }: WelcomeProps) {
     const loggedIn = Boolean(auth?.user);
     const mainHref = loggedIn ? route('projects.index') : canRegister ? route('register') : route('login');
-    const mainLabel = loggedIn ? 'Abrir painel' : canRegister ? 'Criar empresa' : 'Acessar Trilha';
+    const mainLabel = loggedIn ? 'Abrir painel' : canRegister ? 'Criar empresa' : 'Acessar Trilha+';
 
     return (
         <>
-            <Head title="Trilha · Gestão de projetos multiempresa">
+            <Head title="Trilha+ · Gestão de projetos multiempresa">
                 <meta name="description" content="Organize projetos, equipes, cronogramas e permissões em uma plataforma multiempresa com trilha de auditoria." />
             </Head>
             <div className="min-h-screen bg-slate-50 text-slate-900">
                 <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950 text-white shadow-sm">
                     <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-5 px-5 sm:px-8">
-                        <a href="#inicio" className="flex items-center gap-2.5 font-black tracking-tight" aria-label="Trilha — início">
+                        <a href="#inicio" className="flex items-center gap-2.5 font-black tracking-tight" aria-label="Trilha+ — início">
                             <ApplicationLogo className="h-9 w-9" />
-                            <span>Trilha</span>
+                            <span>Trilha+</span>
                         </a>
                         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-300 md:flex" aria-label="Seções da página">
                             <a className="hover:text-white focus-visible:outline-blue-400" href="#recursos">Recursos</a>
@@ -44,7 +44,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[.9fr_1.1fr] lg:gap-9 lg:py-24">
                             <div>
                                 <p className="mb-3 text-xs font-black uppercase tracking-[.18em] text-blue-700">Sistema multiempresa</p>
-                                <h1 className="text-5xl font-black tracking-[-.055em] text-slate-950 sm:text-6xl">Trilha</h1>
+                                <h1 className="text-5xl font-black tracking-[-.055em] text-slate-950 sm:text-6xl">Trilha+</h1>
                                 <p className="mt-2 text-sm font-semibold tracking-wide text-blue-700">Do plano à entrega.</p>
                                 <p className="mt-4 max-w-xl text-xl font-extrabold leading-snug tracking-tight text-slate-800 sm:text-2xl">Gestão de projetos, tarefas e permissões — por empresa.</p>
                                 <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Centralize equipes, responsabilidades, prazos e execução em uma rotina visual. Cada organização administra seus próprios usuários e dados, com papéis e registros de atividade.</p>
@@ -59,7 +59,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                                 </dl>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,.16)] sm:p-4" aria-label="Prévia ilustrativa do painel Trilha">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,.16)] sm:p-4" aria-label="Prévia ilustrativa do painel Trilha+">
                                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-2 pb-4 pt-1 sm:px-3">
                                     <div className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 font-black text-blue-700">E</span><div className="min-w-0"><strong className="block truncate text-sm text-slate-900">Empresa da equipe</strong><span className="text-xs text-slate-500">Visão administrativa</span></div></div>
                                     <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">● Ativo</span>
@@ -135,7 +135,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                 <footer className="bg-slate-950 text-slate-300">
                     <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-7 text-sm sm:px-8 md:flex-row md:items-center md:justify-between">
-                        <span className="flex items-center gap-2 font-black text-white"><ApplicationLogo className="h-7 w-7" />Trilha</span>
+                        <span className="flex items-center gap-2 font-black text-white"><ApplicationLogo className="h-7 w-7" />Trilha+</span>
                         <span>Gestão de projetos, equipes, empresas e atividade.</span>
                         <Link href={route('company.versions.index')} className="font-semibold text-blue-300 hover:text-white">Histórico de versões</Link>
                     </div>

@@ -1,6 +1,6 @@
-# ManageCT Project Laravel
+# Trilha+ Project Laravel
 
-Laravel migration of **ManageCT**, a multi-tenant SaaS platform for project management, Gantt scheduling, and role-based collaboration.
+Laravel migration of **Trilha+**, a multi-tenant SaaS platform for project management, Gantt scheduling, and role-based collaboration.
 
 This repository is intentionally independent from the stable Phalcon application. It provides the new backend foundation for a controlled migration to a PHP stack that can run on shared hosting today and scale to VPS or managed infrastructure later.
 

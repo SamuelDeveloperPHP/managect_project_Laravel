@@ -6,7 +6,7 @@
         <meta name="referrer" content="no-referrer">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title inertia>{{ config('app.name', 'Trilha') }}</title>
+        <title inertia>{{ config('app.name', 'Trilha+') }}</title>
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
         <!-- Fonts -->

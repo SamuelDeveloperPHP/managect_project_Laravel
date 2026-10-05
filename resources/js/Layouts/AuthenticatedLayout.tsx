@@ -53,7 +53,7 @@ export default function Authenticated({
                 <div className="flex h-[76px] shrink-0 items-center border-b border-slate-100 px-6">
                     <Link href={route('projects.index')} onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <ApplicationLogo className="h-9 w-9 fill-current text-indigo-600" />
-                        <span className="text-base font-bold tracking-tight text-slate-900">Trilha</span>
+                        <span className="text-base font-bold tracking-tight text-slate-900">Trilha+</span>
                     </Link>
                     <button type="button" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-slate-100 md:hidden">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
@@ -95,7 +95,7 @@ export default function Authenticated({
                     </button>
                     <Link href={route('projects.index')} className="flex items-center gap-2">
                         <ApplicationLogo className="h-7 w-7 fill-current text-indigo-600" />
-                        <span className="text-sm font-bold text-slate-900">Trilha</span>
+                        <span className="text-sm font-bold text-slate-900">Trilha+</span>
                     </Link>
                     {company?.name && <span className="ml-auto max-w-[42%] truncate text-xs font-medium text-slate-500">{company.name}</span>}
                 </div>

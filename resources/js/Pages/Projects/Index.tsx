@@ -19,7 +19,7 @@ export default function Index({ projects, canManageProjects }: { projects: Proje
     return (
         <AuthenticatedLayout header={
             <div>
-                <p className="text-sm font-medium text-indigo-600">Trilha</p>
+                <p className="text-sm font-medium text-indigo-600">Trilha+</p>
                 <h2 className="text-2xl font-semibold text-slate-900">Projetos</h2>
             </div>
         }>
