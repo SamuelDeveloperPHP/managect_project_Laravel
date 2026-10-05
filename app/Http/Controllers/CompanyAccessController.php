@@ -60,6 +60,7 @@ class CompanyAccessController extends Controller
         abort_unless($companyId > 0, 422, 'Selecione a empresa de destino.');
 
         if ($data['role'] === 'admin') {
+            $this->assertNoOtherAdministrator($companyId);
             $this->assertDistinctFromRecoveryEmail($companyId, $data['email']);
         }
 
@@ -103,6 +104,9 @@ class CompanyAccessController extends Controller
 
         $this->protectLastAdmin($target, $data['role'], $target->is_active);
         if ($data['role'] === 'admin') {
+            if ($target->role !== 'admin') {
+                $this->assertNoOtherAdministrator((int) $target->company_id);
+            }
             $this->assertDistinctFromRecoveryEmail((int) $target->company_id, $data['email']);
         }
 
@@ -115,6 +119,39 @@ class CompanyAccessController extends Controller
         ])->save();
 
         return back()->with('success', 'Perfil atualizado.');
+    }
+
+    /**
+     * Hand the company administration to another active member. The target becomes the
+     * only administrator; the previous administrator(s) become regular users.
+     */
+    public function transferAdmin(Request $request, int $user): RedirectResponse
+    {
+        $target = $this->target($request, $user);
+        $companyId = (int) $target->company_id;
+
+        if (! $request->user()->hasRole('master') && (int) $request->user()->company_id !== $companyId) {
+            abort(404);
+        }
+        if ($target->role === 'admin') {
+            throw ValidationException::withMessages(['role' => 'Este usuário já é o administrador da empresa.']);
+        }
+        if (! $target->is_active) {
+            throw ValidationException::withMessages(['role' => 'Ative o usuário antes de transferir a administração.']);
+        }
+        $this->assertDistinctFromRecoveryEmail($companyId, $target->email);
+
+        DB::transaction(function () use ($target, $companyId): void {
+            User::query()->where('company_id', $companyId)->where('role', 'admin')->whereKeyNot($target->id)->get()
+                ->each(fn (User $previous) => $previous->forceFill([
+                    'role' => 'user',
+                    'permissions' => $this->permissions(array_fill_keys(self::PERMISSIONS, true)),
+                ])->save());
+
+            $target->forceFill(['role' => 'admin', 'permissions' => []])->save();
+        });
+
+        return back()->with('success', 'Administração da empresa transferida.');
     }
 
     public function setActive(Request $request, int $user): RedirectResponse
@@ -204,6 +241,15 @@ class CompanyAccessController extends Controller
         abort_unless(Company::query()->whereKey($companyId)->exists(), 404);
 
         return $companyId;
+    }
+
+    private function assertNoOtherAdministrator(int $companyId): void
+    {
+        if (User::query()->where('company_id', $companyId)->where('role', 'admin')->exists()) {
+            throw ValidationException::withMessages([
+                'role' => 'Cada empresa possui apenas um administrador. Use "Transferir administração" para trocar o responsável.',
+            ]);
+        }
     }
 
     private function assertDistinctFromRecoveryEmail(int $companyId, string $email): void
