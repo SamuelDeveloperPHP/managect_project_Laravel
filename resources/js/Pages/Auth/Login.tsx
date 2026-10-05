@@ -5,7 +5,7 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function Login({ status, canResetPassword }: { status?: string; canResetPassword: boolean }) {
+export default function Login({ status, canResetPassword, canRegister }: { status?: string; canResetPassword: boolean; canRegister: boolean }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -20,7 +20,7 @@ export default function Login({ status, canResetPassword }: { status?: string; c
     return (
         <GuestLayout>
             <Head title="Entrar">
-                <meta name="description" content="Acesse o ManageCT para acompanhar os projetos e as tarefas da sua empresa." />
+                <meta name="description" content="Acesse o Trilha para acompanhar os projetos e as tarefas da sua empresa." />
             </Head>
 
             <div className="mb-7">
@@ -95,6 +95,13 @@ export default function Login({ status, canResetPassword }: { status?: string; c
                     {processing ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Validando acesso…</> : <>Entrar <ArrowIcon /></>}
                 </button>
             </form>
+
+            {canRegister && <div className="mt-5 text-center text-sm text-slate-600">
+                Ainda não tem uma conta?{' '}
+                <Link href={route('register')} className="font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 transition hover:text-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                    Cadastre sua empresa
+                </Link>
+            </div>}
 
             <div className="mt-6 flex items-start gap-2.5 border-t border-slate-100 pt-5 text-xs leading-5 text-slate-500"><ShieldIcon /><p>Seu acesso e os dados da sua empresa são protegidos por permissões individuais.</p></div>
         </GuestLayout>

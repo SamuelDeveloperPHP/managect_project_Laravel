@@ -14,39 +14,46 @@ class SetCurrentCompany
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        $companyId = $user?->company_id;
 
-        if (! $companyId || ! $user->is_active || $user->deleted_at !== null) {
+        if (! $user?->is_active || $user->deleted_at !== null) {
             $this->invalidate($request);
-            abort(403, 'Sua conta não está ativa para acessar esta empresa.');
+            abort(403, 'Sua conta não está ativa para acessar o sistema.');
         }
 
-        $company = $user->company;
-        if (! $company || ! $company->is_active || $company->deleted_at !== null) {
+        if ($user->role === 'master' && ! $user->isPlatformMasterIdentity()) {
             $this->invalidate($request);
-            abort(403, 'A empresa está inativa.');
+            abort(403, 'O acesso Master é reservado à conta da plataforma.');
         }
 
         $tenantContext = app(TenantContext::class);
-        $currentCompany = $company;
-        if ($user->hasRole('master')) {
+        $currentCompany = null;
+
+        if ($user->isPlatformMasterIdentity()) {
             $selectedCompanyId = $request->session()->get('master_company_id');
             if ($selectedCompanyId) {
-                $selectedCompany = Company::query()->find($selectedCompanyId);
+                $selectedCompany = Company::query()->where('is_active', true)->find($selectedCompanyId);
                 if ($selectedCompany) {
-                    $companyId = $selectedCompany->id;
+                    $tenantContext->setCompanyId((int) $selectedCompany->id);
                     $currentCompany = $selectedCompany;
                 } else {
                     $request->session()->forget('master_company_id');
-                    $selectedCompanyId = null;
                 }
             }
 
-            if (! $selectedCompanyId) {
+            if ($currentCompany === null) {
                 $tenantContext->allowAllCompanies();
             }
+        } else {
+            $company = $user->company;
+            if (! $company || ! $company->is_active || $company->deleted_at !== null) {
+                $this->invalidate($request);
+                abort(403, 'A empresa está inativa.');
+            }
+
+            $tenantContext->setCompanyId((int) $company->id);
+            $currentCompany = $company;
         }
-        $tenantContext->setCompanyId((int) $companyId);
+
         $request->attributes->set('current_company', $currentCompany);
 
         try {

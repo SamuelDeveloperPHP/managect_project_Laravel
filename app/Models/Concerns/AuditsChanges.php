@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,6 +38,10 @@ trait AuditsChanges
 
         if ($companyId === null && $model->getTable() === 'companies') {
             $companyId = $model->getKey();
+        }
+
+        if ($model instanceof User && $model->hasRole('master')) {
+            $companyId = null;
         }
 
         AuditLog::query()->create([

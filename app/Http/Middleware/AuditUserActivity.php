@@ -115,7 +115,11 @@ class AuditUserActivity
         $userExists = $actorId !== null && User::withTrashed()->whereKey($actorId)->exists();
         $auditCompanyId = $actor?->company_id;
 
-        if ($actor?->role === 'master') {
+        if ($actor?->hasRole('master')) {
+            // A linked company is a reference for the platform account, not the
+            // tenant scope for global activity. Attribute only explicitly scoped
+            // or entity-specific master actions to a company.
+            $auditCompanyId = null;
             $requestedCompanyId = $request->input('company_id', $request->query('company_id'));
             if (is_numeric($requestedCompanyId) && Company::query()->whereKey((int) $requestedCompanyId)->exists()) {
                 $auditCompanyId = (int) $requestedCompanyId;
@@ -129,6 +133,13 @@ class AuditUserActivity
                 };
                 if ($entityCompanyId !== null) {
                     $auditCompanyId = (int) $entityCompanyId;
+                }
+            }
+
+            if ($auditCompanyId === null && $request->session()->has('master_company_id')) {
+                $selectedCompanyId = (int) $request->session()->get('master_company_id');
+                if (Company::query()->whereKey($selectedCompanyId)->where('is_active', true)->exists()) {
+                    $auditCompanyId = $selectedCompanyId;
                 }
             }
         }

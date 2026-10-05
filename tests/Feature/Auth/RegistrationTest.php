@@ -25,42 +25,44 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'company_name' => 'Empresa de Teste',
-            'document_type' => 'CPF',
-            'document_number' => '529.982.247-25',
+            'company_cnpj' => '11.222.333/0001-81',
+            'cpf' => '529.982.247-25',
             'email' => 'test@example.com',
             'password' => 'long-secure-password',
             'password_confirmation' => 'long-secure-password',
         ]);
 
         $this->assertAuthenticated();
-        $this->assertDatabaseHas('companies', ['name' => 'Empresa de Teste']);
-        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'role' => 'admin']);
+        $this->assertDatabaseHas('companies', ['name' => 'Empresa de Teste', 'document_type' => 'CNPJ', 'document_number' => '11222333000181']);
+        $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'cpf' => '52998224725', 'role' => 'admin']);
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_registration_rejects_secondary_recovery_email_equal_to_administrator_email(): void
     {
-        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'document_type' => 'CPF', 'document_number' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'test@example.com'])
+        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'company_cnpj' => '11.222.333/0001-81', 'cpf' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'test@example.com'])
             ->assertSessionHasErrors('secondary_recovery_email');
         $this->assertGuest();
     }
 
     public function test_registration_stores_distinct_secondary_recovery_email(): void
     {
-        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'document_type' => 'CPF', 'document_number' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'backup@example.org'])->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('companies', ['name' => 'Empresa de Teste', 'secondary_recovery_email' => 'backup@example.org']);
+        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'company_cnpj' => '11.222.333/0001-81', 'cpf' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'backup@example.org'])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('companies', ['document_number' => '11222333000181', 'secondary_recovery_email' => 'backup@example.org']);
     }
 
     public function test_admin_password_reset_goes_to_both_recovery_emails(): void
     {
         Notification::fake();
-        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'document_type' => 'CPF', 'document_number' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'backup@example.org']);
-        $this->post('/logout');
+        $this->post('/register', ['name' => 'Test User', 'company_name' => 'Empresa de Teste', 'company_cnpj' => '11.222.333/0001-81', 'cpf' => '529.982.247-25', 'email' => 'test@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password', 'secondary_recovery_email' => 'backup@example.org']);
+        auth()->logout();
         $user = User::where('email', 'test@example.com')->firstOrFail();
 
         $this->post('/forgot-password', ['email' => 'test@example.com']);
 
-        Notification::assertSentTo($user, ResetPassword::class, fn ($n) => $user->routeNotificationForMail($n) === ['test@example.com', 'backup@example.org']);
+        Notification::assertSentTo($user, ResetPassword::class, function ($n) use ($user) {
+            return $user->routeNotificationForMail($n) === ['test@example.com', 'backup@example.org'];
+        });
     }
 
     public function test_registration_requires_a_long_password(): void
@@ -68,8 +70,8 @@ class RegistrationTest extends TestCase
         $this->post('/register', [
             'name' => 'Responsável',
             'company_name' => 'Empresa Exemplo',
-            'document_type' => 'CNPJ',
-            'document_number' => '11.222.333/0001-81',
+            'company_cnpj' => '11.222.333/0001-81',
+            'cpf' => '529.982.247-25',
             'email' => 'responsavel@example.test',
             'password' => 'short',
             'password_confirmation' => 'short',
@@ -78,10 +80,10 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'responsavel@example.test']);
     }
 
-    public function test_public_registration_is_closed_outside_development(): void
+    public function test_public_registration_is_available_in_production(): void
     {
         App::detectEnvironment(fn () => 'production');
 
-        $this->get('/register')->assertNotFound();
+        $this->get('/register')->assertOk();
     }
 }

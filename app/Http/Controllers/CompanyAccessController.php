@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\BrazilianTaxDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ class CompanyAccessController extends Controller
 
         return Inertia::render('Company/Users', [
             'users' => User::query()->where('company_id', $companyId)->orderBy('name')->get([
-                'id', 'name', 'email', 'role', 'permissions', 'is_active', 'last_login_at', 'created_at',
+                'id', 'name', 'email', 'cpf', 'role', 'permissions', 'is_active', 'last_login_at', 'created_at',
             ]),
             'permissionOptions' => self::PERMISSIONS,
             'companies' => $request->user()->hasRole('master') ? Company::query()->orderBy('name')->get(['id', 'name', 'document_type', 'document_number']) : [],
@@ -34,9 +35,18 @@ class CompanyAccessController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $request->merge([
+            'cpf' => $this->normalizeCpf($request->input('cpf')),
+            'email' => mb_strtolower(trim((string) $request->input('email'))),
+        ]);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:190', Rule::notIn([User::PLATFORM_MASTER_EMAIL]), 'unique:users,email'],
+            'cpf' => ['nullable', 'string', 'size:11', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
+                    $fail('Informe um CPF válido.');
+                }
+            }, Rule::unique('users', 'cpf')],
             'password' => ['required', 'string', 'min:12', 'confirmed'],
             'role' => ['required', Rule::in(['admin', 'user'])],
             'permissions' => ['nullable', 'array'],
@@ -57,6 +67,7 @@ class CompanyAccessController extends Controller
             'company_id' => $companyId,
             'name' => $data['name'],
             'email' => mb_strtolower($data['email']),
+            'cpf' => $data['cpf'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
             'permissions' => $this->permissions($data['permissions'] ?? []),
@@ -69,9 +80,18 @@ class CompanyAccessController extends Controller
     public function update(Request $request, int $user): RedirectResponse
     {
         $target = $this->target($request, $user);
+        $request->merge([
+            'cpf' => $this->normalizeCpf($request->input('cpf')),
+            'email' => mb_strtolower(trim((string) $request->input('email'))),
+        ]);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', Rule::unique('users', 'email')->ignore($target->id)],
+            'email' => ['required', 'email', 'max:190', Rule::notIn([User::PLATFORM_MASTER_EMAIL]), Rule::unique('users', 'email')->ignore($target->id)],
+            'cpf' => ['nullable', 'string', 'size:11', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
+                    $fail('Informe um CPF válido.');
+                }
+            }, Rule::unique('users', 'cpf')->ignore($target->id)],
             'role' => ['required', Rule::in(['admin', 'user'])],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['boolean'],
@@ -89,6 +109,7 @@ class CompanyAccessController extends Controller
         $target->fill([
             'name' => $data['name'],
             'email' => mb_strtolower($data['email']),
+            'cpf' => $data['cpf'] ?? null,
             'role' => $data['role'],
             'permissions' => $this->permissions($data['permissions'] ?? []),
         ])->save();
@@ -220,5 +241,14 @@ class CompanyAccessController extends Controller
         }
 
         return $normalized;
+    }
+
+    private function normalizeCpf(mixed $cpf): ?string
+    {
+        if (! is_string($cpf) || trim($cpf) === '') {
+            return null;
+        }
+
+        return preg_replace('/\D+/', '', $cpf) ?? '';
     }
 }

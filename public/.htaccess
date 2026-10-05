@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Block dotfiles except ACME validation paths.
+    RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+
+    # Keep server-side files out of the document root if deployment files are copied by mistake.
+    RewriteRule ^(?:app|bootstrap|config|database|resources|routes|tests|vendor)(?:/|$) - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -23,3 +29,30 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    Header always unset Server
+    Header unset Server
+</IfModule>
+
+<FilesMatch "(^\.env(?:\..*)?$|^artisan$|^composer\.(json|lock)$|^phpunit\.xml$|^\.git|\.(sql|sqlite3?|db|bak|backup|dump|old)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "^(?!index\.php$).+\.(php[0-9]?|phtml|phar)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

@@ -76,7 +76,7 @@ class AppServiceProvider extends ServiceProvider
             'APP_URL must use HTTPS' => $appUrlScheme === 'https',
             'SESSION_SECURE_COOKIE must be true' => config('session.secure') === true,
             'SESSION_ENCRYPT must be true' => config('session.encrypt') === true,
-            'RATE_LIMITER_STORE must be redis' => config('cache.limiter') === 'redis',
+            'RATE_LIMITER_STORE must be database or redis' => in_array(config('cache.limiter'), ['database', 'redis'], true),
             'the runtime DB user must not be root' => strtolower($databaseUsername) !== 'root',
         ];
 
