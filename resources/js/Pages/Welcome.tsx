@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 
 type WelcomeProps = {
     canRegister: boolean;
@@ -8,19 +9,19 @@ type WelcomeProps = {
 export default function Welcome({ canRegister, auth }: WelcomeProps) {
     const loggedIn = Boolean(auth?.user);
     const mainHref = loggedIn ? route('projects.index') : canRegister ? route('register') : route('login');
-    const mainLabel = loggedIn ? 'Abrir painel' : canRegister ? 'Criar empresa' : 'Acessar ManageCT';
+    const mainLabel = loggedIn ? 'Abrir painel' : canRegister ? 'Criar empresa' : 'Acessar Trilha';
 
     return (
         <>
-            <Head title="ManageCT · Gestão de projetos multiempresa">
+            <Head title="Trilha · Gestão de projetos multiempresa">
                 <meta name="description" content="Organize projetos, equipes, cronogramas e permissões em uma plataforma multiempresa com trilha de auditoria." />
             </Head>
             <div className="min-h-screen bg-slate-50 text-slate-900">
                 <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950 text-white shadow-sm">
                     <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-5 px-5 sm:px-8">
-                        <a href="#inicio" className="flex items-center gap-2.5 font-black tracking-tight" aria-label="ManageCT — início">
-                            <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-lg">M</span>
-                            <span>ManageCT</span>
+                        <a href="#inicio" className="flex items-center gap-2.5 font-black tracking-tight" aria-label="Trilha — início">
+                            <ApplicationLogo className="h-9 w-9" />
+                            <span>Trilha</span>
                         </a>
                         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-300 md:flex" aria-label="Seções da página">
                             <a className="hover:text-white focus-visible:outline-blue-400" href="#recursos">Recursos</a>
@@ -28,6 +29,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                             <a className="hover:text-white focus-visible:outline-blue-400" href="#acesso">Acesso</a>
                         </nav>
                         <div className="flex items-center gap-2">
+                            <Link href={route('company.versions.index')} className="hidden rounded-lg px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/5 hover:text-white sm:inline-flex">Versões</Link>
                             {!loggedIn && <Link href={route('login')} className="hidden rounded-lg border border-slate-600 px-4 py-2 text-sm font-bold hover:border-slate-400 hover:bg-white/5 sm:inline-flex">Entrar</Link>}
                             <Link href={mainHref} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400">
                                 {mainLabel}<ArrowIcon />
@@ -42,7 +44,8 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[.9fr_1.1fr] lg:gap-9 lg:py-24">
                             <div>
                                 <p className="mb-3 text-xs font-black uppercase tracking-[.18em] text-blue-700">Sistema multiempresa</p>
-                                <h1 className="text-5xl font-black tracking-[-.055em] text-slate-950 sm:text-6xl">ManageCT</h1>
+                                <h1 className="text-5xl font-black tracking-[-.055em] text-slate-950 sm:text-6xl">Trilha</h1>
+                                <p className="mt-2 text-sm font-semibold tracking-wide text-blue-700">Do plano à entrega.</p>
                                 <p className="mt-4 max-w-xl text-xl font-extrabold leading-snug tracking-tight text-slate-800 sm:text-2xl">Gestão de projetos, tarefas e permissões — por empresa.</p>
                                 <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Centralize equipes, responsabilidades, prazos e execução em uma rotina visual. Cada organização administra seus próprios usuários e dados, com papéis e registros de atividade.</p>
                                 <div className="mt-7 flex flex-wrap gap-3">
@@ -56,7 +59,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                                 </dl>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,.16)] sm:p-4" aria-label="Prévia ilustrativa do painel ManageCT">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,.16)] sm:p-4" aria-label="Prévia ilustrativa do painel Trilha">
                                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-2 pb-4 pt-1 sm:px-3">
                                     <div className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 font-black text-blue-700">E</span><div className="min-w-0"><strong className="block truncate text-sm text-slate-900">Empresa da equipe</strong><span className="text-xs text-slate-500">Visão administrativa</span></div></div>
                                     <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">● Ativo</span>
@@ -92,7 +95,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                             <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                                 <Feature number="01" title="Projetos e backlog" text="Organize iniciativas, prioridades, tarefas e entregas em uma visão objetiva para a equipe." />
                                 <Feature number="02" title="Permissões por empresa" text="Administre papéis e capacidades da equipe sem abrir os dados de outra organização." />
-                                <Feature number="03" title="CNPJ ou CPF" text="Vincule o ambiente ao documento da organização e mantenha o contexto do tenant explícito." />
+                                <Feature number="03" title="CNPJ e CPF" text="Identifique a empresa pelo CNPJ e o administrador principal pelo CPF, com validação dos dois documentos." />
                                 <Feature number="04" title="Trilha de auditoria" text="Consulte acessos e alterações registrados para apoiar acompanhamento e investigação." />
                             </div>
                         </div>
@@ -124,7 +127,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                     <section className="border-t border-blue-100 bg-blue-50/60 py-14 sm:py-16">
                         <div className="mx-auto flex max-w-7xl flex-col items-start gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between">
-                            <div><p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Comece agora</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Abra o painel e continue sua rotina.</h2><p className="mt-2 text-sm text-slate-600">Entre com seu usuário ou, nos ambientes de desenvolvimento, configure uma nova empresa.</p></div>
+                            <div><p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Comece agora</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Abra o painel e continue sua rotina.</h2><p className="mt-2 text-sm text-slate-600">Entre com seu usuário ou cadastre sua empresa para começar.</p></div>
                             <Link href={mainHref} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow transition hover:-translate-y-0.5 hover:bg-blue-700">{mainLabel}<ArrowIcon /></Link>
                         </div>
                     </section>
@@ -132,8 +135,9 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
 
                 <footer className="bg-slate-950 text-slate-300">
                     <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-7 text-sm sm:px-8 md:flex-row md:items-center md:justify-between">
-                        <span className="flex items-center gap-2 font-black text-white"><span className="grid h-7 w-7 place-items-center rounded-md bg-blue-600">M</span>ManageCT</span>
+                        <span className="flex items-center gap-2 font-black text-white"><ApplicationLogo className="h-7 w-7" />Trilha</span>
                         <span>Gestão de projetos, equipes, empresas e atividade.</span>
+                        <Link href={route('company.versions.index')} className="font-semibold text-blue-300 hover:text-white">Histórico de versões</Link>
                     </div>
                 </footer>
             </div>

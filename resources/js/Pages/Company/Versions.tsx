@@ -1,8 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
+import { Head, Link } from '@inertiajs/react';
 
 type Notes = { implemented: string[]; fixed: string[]; updated: string[] };
 type Version = { id: number; branch_name: string; commit_sha: string; commit_message: string; executed_by: string; released_at: string; notes: Notes };
+type PageAuth = { user: { id: number; name: string } | null };
 
 const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'medium', timeStyle: 'short' });
 const groups: { key: keyof Notes; label: string; accent: string }[] = [
@@ -11,8 +13,8 @@ const groups: { key: keyof Notes; label: string; accent: string }[] = [
     { key: 'updated', label: 'Atualizado', accent: 'bg-indigo-500' },
 ];
 
-export default function Versions({ versions }: { versions: Version[] }) {
-    return <AuthenticatedLayout>
+export default function Versions({ versions, auth }: { versions: Version[]; auth?: PageAuth }) {
+    const history = <>
         <Head title="Histórico de versões" />
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
             <header>
@@ -44,5 +46,20 @@ export default function Versions({ versions }: { versions: Version[] }) {
                     </article>)}
                 </section>}
         </div>
-    </AuthenticatedLayout>;
+    </>;
+
+    if (auth?.user) {
+        return <AuthenticatedLayout>{history}</AuthenticatedLayout>;
+    }
+
+    return <div className="min-h-screen bg-[#f5f6fa]">
+        <header className="border-b border-slate-200 bg-white">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <Link href="/" className="flex items-center gap-2 font-bold tracking-tight text-slate-900"><ApplicationLogo className="h-9 w-9" />Trilha</Link>
+                <Link href={route('login')} className="rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Entrar</Link>
+            </div>
+        </header>
+        <main>{history}</main>
+        <footer className="border-t border-slate-200 bg-white py-5 text-center text-xs text-slate-500">Histórico público de versões do Trilha</footer>
+    </div>;
 }
