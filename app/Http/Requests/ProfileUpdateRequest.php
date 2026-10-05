@@ -25,6 +25,12 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $secondary = $this->user()->role === 'admin' ? $this->user()->company?->secondary_recovery_email : null;
+                    if ($secondary && mb_strtolower($secondary) === mb_strtolower((string) $value)) {
+                        $fail('O e-mail do administrador deve ser diferente do e-mail de recuperação secundário da empresa.');
+                    }
+                },
             ],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'extensions:jpeg,jpg,png', 'max:2048'],
         ];

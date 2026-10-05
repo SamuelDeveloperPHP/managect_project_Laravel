@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
     {
         abort_unless(app()->environment(['local', 'development', 'dev', 'testing']), 404);
 
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:120',
             'company_name' => 'required|string|max:120',
             'document_type' => ['required', Rule::in(['CNPJ', 'CPF'])],
@@ -50,10 +50,13 @@ class RegisteredUserController extends Controller
                 }
             }, Rule::unique('companies', 'document_number')->where('document_type', $request->input('document_type'))],
             'email' => 'required|string|lowercase|email|max:190|unique:'.User::class,
+            'secondary_recovery_email' => ['nullable', 'string', 'lowercase', 'email', 'max:190', 'different:email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'secondary_recovery_email.different' => 'O e-mail de recuperação secundário deve ser diferente do e-mail do administrador.',
         ]);
 
-        $user = DB::transaction(function () use ($request): User {
+        $user = DB::transaction(function () use ($request, $data): User {
             $baseSlug = Str::slug($request->string('company_name')) ?: 'empresa';
             $slug = $baseSlug;
             $suffix = 2;
@@ -69,6 +72,7 @@ class RegisteredUserController extends Controller
                 'slug' => $slug,
                 'document_type' => $documentType,
                 'document_number' => $documentNumber,
+                'secondary_recovery_email' => $data['secondary_recovery_email'] ?? null,
                 'is_active' => true,
             ]);
 

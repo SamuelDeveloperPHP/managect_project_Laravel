@@ -55,7 +55,7 @@ class CompanySecurityTest extends TestCase
                 ->where('selectedCompanyId', $company->id));
     }
 
-    public function test_company_admin_can_update_legacy_company_profile_with_valid_document_and_recovery_domain(): void
+    public function test_company_admin_can_update_legacy_company_profile_with_valid_document_and_secondary_recovery_email(): void
     {
         $company = Company::factory()->create(['name' => 'Empresa anterior']);
         $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
@@ -65,7 +65,6 @@ class CompanySecurityTest extends TestCase
             'document_type' => 'CPF',
             'document_number' => '529.982.247-25',
             'domain' => 'empresa.example',
-            'admin_recovery_email' => 'recuperacao@empresa.example',
             'secondary_recovery_email' => 'backup@empresa.example',
             'contact_name' => 'Contato responsável',
             'contact_email' => 'contato@example.test',
@@ -297,5 +296,23 @@ class CompanySecurityTest extends TestCase
         $this->assertTrue(BrazilianTaxDocument::isValid('CNPJ', '11.222.333/0001-81'));
         $this->assertFalse(BrazilianTaxDocument::isValid('CPF', '111.111.111-11'));
         $this->assertFalse(BrazilianTaxDocument::isValid('CNPJ', '11.222.333/0001-80'));
+    }
+
+    public function test_secondary_recovery_email_must_differ_from_administrator_email(): void
+    {
+        $company = Company::factory()->create();
+        $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin', 'email' => 'admin@empresa.example']);
+        $payload = ['name' => 'Empresa', 'document_type' => 'CPF', 'document_number' => '529.982.247-25'];
+
+        $this->actingAs($admin)->put(route('company.settings.update'), $payload + ['secondary_recovery_email' => 'ADMIN@empresa.example'])
+            ->assertSessionHasErrors('secondary_recovery_email');
+
+        $this->actingAs($admin)->put(route('company.settings.update'), $payload + ['secondary_recovery_email' => 'outro@gmail.example'])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('companies', ['id' => $company->id, 'secondary_recovery_email' => 'outro@gmail.example']);
+
+        $this->put(route('company.users.update', $admin), [
+            'name' => $admin->name, 'email' => 'outro@gmail.example', 'role' => 'admin',
+        ])->assertSessionHasErrors('email');
     }
 }

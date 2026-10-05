@@ -33,6 +33,13 @@ class Company extends Model
         return $this->hasMany(Project::class);
     }
 
+    /** @return list<string> */
+    public function administratorEmails(): array
+    {
+        return $this->users()->where('role', 'admin')->pluck('email')
+            ->map(fn (string $email) => mb_strtolower($email))->all();
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(CompanyDocument::class);
