@@ -18,7 +18,7 @@ export default function Versions({ versions, auth }: { versions: Version[]; auth
         <Head title="Histórico de versões" />
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
             <header>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600">Notas de release</p>
+                <p className="text-xs font-semibold text-indigo-600">Notas de release</p>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Histórico de versões</h1>
                 <p className="mt-1 text-sm text-slate-500">Veja o que foi implantado, corrigido e atualizado em cada publicação.</p>
             </header>
@@ -34,7 +34,7 @@ export default function Versions({ versions, auth }: { versions: Version[]; auth
                             </header>
                             <div className="grid gap-4 px-5 py-5 sm:grid-cols-3 sm:px-6">
                                 {groups.map(({ key, label, accent }) => version.notes[key].length > 0 && <section key={key}>
-                                    <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600"><span className={`h-2 w-2 rounded-full ${accent}`} />{label}<span className="text-slate-400">{version.notes[key].length}</span></h3>
+                                    <h3 className="flex items-center gap-2 text-xs font-semibold text-slate-600"><span className={`h-2 w-2 rounded-full ${accent}`} />{label}<span className="text-slate-400">{version.notes[key].length}</span></h3>
                                     <ul className="mt-2 space-y-2 text-sm leading-5 text-slate-600">{version.notes[key].map((note, index) => <li key={`${key}-${index}`} className="border-l border-slate-200 pl-3">{note}</li>)}</ul>
                                 </section>)}
                             </div>

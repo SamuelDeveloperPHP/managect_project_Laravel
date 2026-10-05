@@ -31,8 +31,8 @@ export default function Register() {
             </Head>
 
             <div className="mb-7">
-                <p className="text-xs font-extrabold uppercase tracking-[.16em] text-blue-700">Comece pela sua empresa</p>
-                <h1 className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">Criar conta na Trilha+</h1>
+                <p className="text-xs font-extrabold text-blue-700">Comece pela sua empresa</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-[-.04em] text-slate-950">Criar conta na Trilha+</h1>
                 <p className="mt-2 text-sm leading-6 text-slate-500">Cadastre a empresa e os dados do administrador principal. Os documentos são validados e vinculados à conta.</p>
             </div>
 

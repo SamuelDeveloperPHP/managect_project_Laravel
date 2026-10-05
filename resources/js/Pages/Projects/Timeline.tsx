@@ -103,7 +103,7 @@ export default function Timeline({ project, backlog, canManage, ganttTemplates }
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h11" /></svg>
                     </Link>
                     <span className="h-7 w-px shrink-0 bg-slate-200" />
-                    <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{project.code} · {backlog.code} · Gantt</p><h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">{backlog.name}</h1></div>
+                    <div className="min-w-0"><p className="text-[10px] font-semibold text-slate-400">{project.code} · {backlog.code} · Gantt</p><h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">{backlog.name}</h1></div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                     <Link href={route('projects.overview', project.id)} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 sm:inline-flex">Projeto</Link>

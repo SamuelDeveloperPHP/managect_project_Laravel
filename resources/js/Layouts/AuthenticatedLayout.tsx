@@ -61,7 +61,7 @@ export default function Authenticated({
                 </div>
 
                 <div className="px-4 pt-6">
-                    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
+                    <p className="px-3 text-[10px] font-semibold text-slate-400">Workspace</p>
                     <nav aria-label="Navegação principal" className="mt-3 space-y-1">
                         {navigation.map((item) => (
                             <Link key={item.label} href={item.href} onClick={() => setSidebarOpen(false)} aria-current={item.active ? 'page' : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${item.active ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
