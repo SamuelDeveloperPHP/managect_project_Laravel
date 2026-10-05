@@ -43,7 +43,7 @@ export default function Settings({ company, hasLogo, documents, companies, selec
         pdf.post(route('company.documents.store', companyQuery), { forceFormData: true, preserveScroll: true, onSuccess: () => pdf.reset('document') });
     };
 
-    return <AuthenticatedLayout header={<div><p className="text-sm font-medium text-indigo-600">ManageCT · Administração</p><h2 className="text-2xl font-semibold text-slate-900">Configuração da empresa</h2></div>}>
+    return <AuthenticatedLayout header={<div><p className="text-sm font-medium text-indigo-600">Trilha · Administração</p><h2 className="text-2xl font-semibold text-slate-900">Configuração da empresa</h2></div>}>
         <Head title="Configuração da empresa" />
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-lg font-semibold text-slate-900">Dados cadastrais e documentos</h1><p className="mt-1 text-sm text-slate-500">Esses dados ficam isolados para a empresa selecionada.</p></div>{companies.length > 0 && <label className={labelClass}>Empresa<select value={selectedCompanyId} onChange={(event) => router.get(route('company.settings.edit'), { company_id: event.target.value }, { preserveScroll: true })} className={`${inputClass} min-w-64`}>{companies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}</div>

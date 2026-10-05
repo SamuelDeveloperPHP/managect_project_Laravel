@@ -37,11 +37,11 @@ export default function Authenticated({
         { label: 'Painel', href: route('dashboard'), active: route().current('dashboard'), icon: 'dashboard' },
         ...(user.role === 'master' ? [{ label: 'Empresas', href: route('master.companies.index'), active: route().current('master.companies.*'), icon: 'companies' as const }] : []),
         { label: 'Projetos', href: route('projects.index'), active: route().current('projects.*'), icon: 'projects' },
+        { label: 'Versões', href: route('company.versions.index'), active: route().current('company.versions.*'), icon: 'versions' },
         ...(isAdmin ? [
             { label: 'Equipe', href: route('company.users.index'), active: route().current('company.users.*'), icon: 'team' as const },
             { label: 'Auditoria', href: route('company.audit.index'), active: route().current('company.audit.*'), icon: 'audit' as const },
             { label: 'Empresa', href: route('company.settings.edit'), active: route().current('company.settings.*') || route().current('company.documents.*'), icon: 'settings' as const },
-            { label: 'Versões', href: route('company.versions.index'), active: route().current('company.versions.*'), icon: 'versions' as const },
         ] : []),
     ];
 
@@ -53,7 +53,7 @@ export default function Authenticated({
                 <div className="flex h-[76px] shrink-0 items-center border-b border-slate-100 px-6">
                     <Link href={route('projects.index')} onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <ApplicationLogo className="h-9 w-9 fill-current text-indigo-600" />
-                        <span className="text-base font-bold tracking-tight text-slate-900">ManageCT</span>
+                        <span className="text-base font-bold tracking-tight text-slate-900">Trilha</span>
                     </Link>
                     <button type="button" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-slate-100 md:hidden">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
@@ -95,7 +95,7 @@ export default function Authenticated({
                     </button>
                     <Link href={route('projects.index')} className="flex items-center gap-2">
                         <ApplicationLogo className="h-7 w-7 fill-current text-indigo-600" />
-                        <span className="text-sm font-bold text-slate-900">ManageCT</span>
+                        <span className="text-sm font-bold text-slate-900">Trilha</span>
                     </Link>
                     {company?.name && <span className="ml-auto max-w-[42%] truncate text-xs font-medium text-slate-500">{company.name}</span>}
                 </div>
