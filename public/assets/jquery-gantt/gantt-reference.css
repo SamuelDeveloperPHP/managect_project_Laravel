@@ -177,9 +177,16 @@
   text-overflow: ellipsis;
 }
 
-.gdfCell {
+.taskEditRow {
   height: 30px;
-  padding: 4px 7px;
+}
+
+.gdfCell {
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 7px;
+  overflow: hidden;
+  line-height: 28px;
   color: #141d1e;
   border-right: 1px solid #e9eded;
   border-bottom: 1px solid #e9eded;
@@ -347,8 +354,16 @@
   stroke-width: 1px;
 }
 
+.taskBoxSVG .taskProgressSVG {
+  fill: #c98a12;
+}
+
 .taskBoxSVG .textPerc {
   fill: #fff;
+  paint-order: stroke;
+  stroke: #082126;
+  stroke-width: 3px;
+  stroke-linejoin: round;
   font-size: 10px;
   font-weight: 800;
 }
