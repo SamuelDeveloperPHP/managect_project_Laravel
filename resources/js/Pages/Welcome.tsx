@@ -139,6 +139,7 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                         <span>Gestão de projetos, equipes, empresas e atividade.</span>
                         <Link href={route('company.versions.index')} className="font-semibold text-blue-300 hover:text-white">Histórico de versões</Link>
                     </div>
+                    <p className="border-t border-slate-800 px-5 py-4 text-center text-xs text-slate-400">© {new Date().getFullYear()} Trilha+ · Um produto NexoCore Tecnologia</p>
                 </footer>
             </div>
         </>
