@@ -51,11 +51,11 @@ export default function UpdatePasswordForm({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900">
+                <h2 className="font-display text-lg font-extrabold tracking-tight text-neutral-950">
                     Alterar senha
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-neutral-600">
                     Use uma senha longa e exclusiva para manter sua conta protegida.
                 </p>
             </header>
@@ -75,7 +75,7 @@ export default function UpdatePasswordForm({
                             setData('current_password', e.target.value)
                         }
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1.5 block w-full"
                         autoComplete="current-password"
                     />
 
@@ -94,7 +94,7 @@ export default function UpdatePasswordForm({
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1.5 block w-full"
                         autoComplete="new-password"
                     />
 
@@ -114,7 +114,7 @@ export default function UpdatePasswordForm({
                             setData('password_confirmation', e.target.value)
                         }
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1.5 block w-full"
                         autoComplete="new-password"
                     />
 
@@ -134,7 +134,7 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-neutral-600">
                             Senha salva.
                         </p>
                     </Transition>

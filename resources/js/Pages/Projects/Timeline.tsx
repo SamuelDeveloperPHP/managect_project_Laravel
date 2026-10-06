@@ -96,18 +96,18 @@ export default function Timeline({ project, backlog, canManage, ganttTemplates }
 
     return <>
         <Head title={`${project.code} — Cronograma`} />
-        <div className="gantt-screen fixed inset-0 z-50 flex h-screen h-[100dvh] flex-col overflow-hidden bg-[#f5f6fa]">
-            <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
+        <div className="gantt-screen fixed inset-0 z-50 flex h-screen h-[100dvh] flex-col overflow-hidden bg-neutral-50">
+            <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-brand-950 px-3 sm:px-5">
                 <div className="flex min-w-0 items-center gap-3">
-                    <Link href={route('projects.backlog.show', [project.id, backlog.id])} aria-label="Voltar ao backlog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+                    <Link href={route('projects.backlog.show', [project.id, backlog.id])} aria-label="Voltar ao backlog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-brand-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-signal-300/40">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h11" /></svg>
                     </Link>
-                    <span className="h-7 w-px shrink-0 bg-slate-200" />
-                    <div className="min-w-0"><p className="text-[10px] font-semibold text-slate-400">{project.code} · {backlog.code} · Gantt</p><h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">{backlog.name}</h1></div>
+                    <span className="h-7 w-px shrink-0 bg-white/15" />
+                    <div className="min-w-0"><p className="font-mono text-[11px] text-brand-300">{project.code} · {backlog.code} · Gantt</p><h1 className="truncate font-display text-sm font-extrabold tracking-tight text-white sm:text-base">{backlog.name}</h1></div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                    <Link href={route('projects.overview', project.id)} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 sm:inline-flex">Projeto</Link>
-                    {canManage && <button type="button" onClick={() => (window as GanttWindow).saveGanttOnServer?.()} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 sm:px-4 sm:text-sm">Salvar</button>}
+                    <Link href={route('projects.overview', project.id)} className="hidden rounded-xl px-3 py-2 text-sm font-medium text-brand-200 transition hover:bg-white/10 hover:text-white sm:inline-flex">Projeto</Link>
+                    {canManage && <button type="button" onClick={() => (window as GanttWindow).saveGanttOnServer?.()} className="rounded-xl bg-signal-300 px-4 py-2 text-xs font-semibold text-[#1b1305] transition hover:bg-[#efc36f] active:translate-y-px sm:text-sm">Salvar</button>}
                 </div>
             </header>
 

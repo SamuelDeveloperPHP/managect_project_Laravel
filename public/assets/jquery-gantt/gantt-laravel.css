@@ -17,19 +17,20 @@
   display: none;
   min-height: 0;
   padding: 10px 14px;
-  border: 1px solid #dbe3ef;
-  border-radius: 10px;
+  border: 1px solid #d5dcdc;
+  border-radius: 12px;
   background: #fff;
-  color: #475569;
+  color: #364343;
+  box-shadow: 0 12px 32px -16px rgba(8, 33, 38, .35);
   font-size: 13px;
   font-weight: 500;
 }
 
 #gantt-toast.gantt-status-bar.success,
 #gantt-toast.gantt-status-bar.info {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  border-color: #b3d0d3;
+  background: #eef5f5;
+  color: #0f3d44;
 }
 
 #gantt-toast.gantt-status-bar.error {

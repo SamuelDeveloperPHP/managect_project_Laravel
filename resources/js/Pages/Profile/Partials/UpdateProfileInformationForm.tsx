@@ -52,11 +52,11 @@ export default function UpdateProfileInformation({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900">
+                <h2 className="font-display text-lg font-extrabold tracking-tight text-neutral-950">
                     Informações do perfil
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-neutral-600">
                     Atualize seu nome, endereço de e-mail e foto de perfil.
                 </p>
             </header>
@@ -67,7 +67,7 @@ export default function UpdateProfileInformation({
 
                     <TextInput
                         id="name"
-                        className="mt-1 block w-full"
+                        className="mt-1.5 block w-full"
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
                         required
@@ -84,7 +84,7 @@ export default function UpdateProfileInformation({
                     <TextInput
                         id="email"
                         type="email"
-                        className="mt-1 block w-full"
+                        className="mt-1.5 block w-full"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
                         required
@@ -152,7 +152,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-neutral-600">
                             Salvo.
                         </p>
                     </Transition>

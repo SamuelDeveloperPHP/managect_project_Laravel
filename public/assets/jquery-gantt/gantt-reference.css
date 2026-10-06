@@ -1,35 +1,35 @@
 .gantt-page {
-  background: #edf2f7;
+  background: #f4f6f6;
 }
 
 .gantt-status-bar {
   min-height: 52px;
   padding: 10px 18px;
-  border-bottom: 1px solid #b8ebc8;
-  background: #d9fbe4;
+  border-bottom: 1px solid #b3d0d3;
+  background: #eef5f5;
 }
 
 .gantt-status {
-  color: #006b2f;
+  color: #0f3d44;
   font-size: 1rem;
   font-weight: 800;
 }
 
 .gantt-status-bar.success,
 .gantt-status-bar.info {
-  background: #d9fbe4;
+  background: #eef5f5;
 }
 
 .gantt-status-bar.success .gantt-status,
 .gantt-status-bar.info .gantt-status {
-  color: #006b2f;
+  color: #0f3d44;
 }
 
 .gantt-status-actions .btn {
   min-height: 38px;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: .95rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .gantt-status-actions .btn-secondary {
@@ -38,7 +38,7 @@
 }
 
 .gantt-status-actions .btn-primary {
-  background: #2563eb;
+  background: #14505a;
 }
 
 .gantt-workspace,
@@ -55,7 +55,7 @@
   padding: 10px 18px;
   overflow-x: auto;
   overflow-y: hidden;
-  border-bottom: 1px solid #d7dee8;
+  border-bottom: 1px solid #e9eded;
   background: #fff;
 }
 
@@ -92,15 +92,15 @@
   justify-content: center;
   margin: 0;
   padding: 0;
-  color: #284966;
-  border-radius: 4px;
+  color: #364343;
+  border-radius: 8px;
   background: transparent;
 }
 
 .ganttButtonBar .button.textual:hover,
 .ganttButtonBar .button.buttonImg:hover {
-  color: #0f2f4d;
-  background: #eef4f9;
+  color: #0f3d44;
+  background: #eef5f5;
 }
 
 .ganttButtonBar .button.textual.icon {
@@ -112,10 +112,10 @@
   padding: 7px 14px;
   color: #fff;
   border: 0;
-  border-radius: 5px;
-  background: #73b900;
+  border-radius: 10px;
+  background: #14505a;
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .ganttButtonSeparator {
@@ -134,18 +134,18 @@
 
 .ganttButtonBar label {
   margin: 0;
-  color: #1f3654;
+  color: #222d2d;
   font-size: .95rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .ganttButtonBar .button:not(.textual):not(.buttonImg):not(.first) {
   min-height: 34px;
   padding: 7px 12px;
-  border-radius: 4px;
-  background: #34495e;
+  border-radius: 10px;
+  background: #0f3d44;
   font-size: .95rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .gdfTable {
@@ -162,14 +162,14 @@
 .gdfColHeader {
   height: 42px;
   padding: 0 6px;
-  color: #5e7188;
-  border-right: 1px solid #d7dee8;
-  border-bottom: 1px solid #c7d1dc;
-  background: #edf1f5;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  color: #4a5959;
+  border-right: 1px solid #e9eded;
+  border-bottom: 1px solid #d5dcdc;
+  background: #f4f6f6;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .gdfColHeader,
@@ -180,21 +180,21 @@
 .gdfCell {
   height: 30px;
   padding: 4px 7px;
-  color: #1f2f45;
-  border-right: 1px solid #e0e6ed;
-  border-bottom: 1px solid #e0e6ed;
+  color: #141d1e;
+  border-right: 1px solid #e9eded;
+  border-bottom: 1px solid #e9eded;
   background: #fff;
   font-size: 13px;
 }
 
 .taskEditRow:nth-child(even) .gdfCell,
 .taskEditRow:nth-child(even) th.gdfCell {
-  background: #fbfdff;
+  background: #f9fafa;
 }
 
 .taskEditRow.rowSelected .gdfCell,
 .taskEditRow.rowSelected th.gdfCell {
-  background: #e9f6ff;
+  background: #e1eeef;
 }
 
 .taskEditRow input,
@@ -209,7 +209,7 @@
 }
 
 .gdfCellInput {
-  background: #e4f9ee;
+  background: #eef5f5;
 }
 
 .taskStatus {
@@ -251,8 +251,8 @@
 .vSplitBar {
   width: 6px;
   border-right: 1px solid #c8d2df;
-  border-left: 1px solid #d9e1ea;
-  background-color: #edf1f5;
+  border-left: 1px solid #e9eded;
+  background-color: #f4f6f6;
   box-shadow: none;
 }
 
@@ -271,14 +271,14 @@
 
 .ganttHead1 th,
 .ganttHead2 th {
-  color: #65758b;
-  border-left: 1px solid #d7dee8;
-  border-bottom: 1px solid #c7d1dc;
-  background: #edf1f5;
+  color: #4a5959;
+  border-left: 1px solid #e9eded;
+  border-bottom: 1px solid #d5dcdc;
+  background: #f4f6f6;
   font-family: Inter, Arial, Helvetica, sans-serif;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .ganttHead1 th {
@@ -305,7 +305,7 @@
 
 .ganttHead2 th.holy,
 .ganttBodyCell.holy {
-  background-color: #f8eee8;
+  background-color: #faf6ec;
 }
 
 .ganttBodyCell {
@@ -335,7 +335,7 @@
 .colorByStatus .taskStatusSVG[status=STATUS_WAITING],
 .colorByStatus .taskStatusSVG[status=STATUS_SUSPENDED],
 .colorByStatus .taskStatusSVG[status=STATUS_UNDEFINED] {
-  fill: #59c267;
+  fill: #2a6670;
 }
 
 .colorByStatus .taskStatusSVG[status=STATUS_FAILED] {
@@ -343,7 +343,7 @@
 }
 
 .taskBoxSVG .taskLayout {
-  stroke: rgba(21, 86, 48, .24);
+  stroke: rgba(8, 33, 38, .3);
   stroke-width: 1px;
 }
 
@@ -354,17 +354,17 @@
 }
 
 .taskLabelSVG {
-  fill: #52657a;
+  fill: #4a5959;
   font-size: 11px;
 }
 
 .taskLinkPathSVG {
-  stroke: rgba(64, 101, 133, .55);
+  stroke: rgba(15, 61, 68, .5);
   stroke-width: 2px;
 }
 
 .ganttTodaySVG {
-  stroke: #df5964;
+  stroke: #c98a12;
   stroke-width: 2px;
 }
 
