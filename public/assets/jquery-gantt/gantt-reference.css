@@ -227,11 +227,11 @@
 }
 
 .taskStatus[status=STATUS_ACTIVE] {
-  background-color: #2fbf65;
+  background-color: #2f9b6e;
 }
 
 .taskStatus[status=STATUS_DONE] {
-  background-color: #4aa8e8;
+  background-color: #3f7fbf;
 }
 
 .taskStatus[status=STATUS_FAILED] {
@@ -239,11 +239,11 @@
 }
 
 .taskStatus[status=STATUS_SUSPENDED] {
-  background-color: #f2bd46;
+  background-color: #8a9898;
 }
 
 .taskStatus[status=STATUS_WAITING] {
-  background-color: #f18a2b;
+  background-color: #d9742a;
 }
 
 .exp-controller {
@@ -337,16 +337,29 @@
   stroke: #e1e7ee;
 }
 
-.colorByStatus .taskStatusSVG[status=STATUS_ACTIVE],
-.colorByStatus .taskStatusSVG[status=STATUS_DONE],
-.colorByStatus .taskStatusSVG[status=STATUS_WAITING],
-.colorByStatus .taskStatusSVG[status=STATUS_SUSPENDED],
+/* Barras por status: seguem os pontos de status da tabela (verde, azul, laranja, cinza, roxo). */
+.colorByStatus .taskStatusSVG[status=STATUS_ACTIVE] {
+  fill: #2f9b6e;
+}
+
+.colorByStatus .taskStatusSVG[status=STATUS_DONE] {
+  fill: #3f7fbf;
+}
+
+.colorByStatus .taskStatusSVG[status=STATUS_WAITING] {
+  fill: #d9742a;
+}
+
+.colorByStatus .taskStatusSVG[status=STATUS_SUSPENDED] {
+  fill: #8a9898;
+}
+
 .colorByStatus .taskStatusSVG[status=STATUS_UNDEFINED] {
-  fill: #2a6670;
+  fill: #b7c2c2;
 }
 
 .colorByStatus .taskStatusSVG[status=STATUS_FAILED] {
-  fill: #d35f5f;
+  fill: #7c3f98;
 }
 
 .taskBoxSVG .taskLayout {
