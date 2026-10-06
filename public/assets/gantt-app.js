@@ -192,6 +192,7 @@
         window.ge.gantt.gridChanged = true;
         window.ge.gantt.redraw();
         fitInitialSplitter();
+        keepGanttSized();
         window.ge.checkpoint();
         setStatus('Cronograma carregado. Edite as linhas e clique em salvar.', 'success');
       })
@@ -199,6 +200,21 @@
         setStatus(error.message, 'error');
         notify('Erro', error.message, 'error');
       });
+  }
+
+  // Recalcula as áreas de rolagem quando fontes terminam de carregar ou o zoom/viewport muda,
+  // para que as barras de rolagem horizontal e vertical nunca fiquem fora da janela.
+  function keepGanttSized() {
+    var refresh = function () {
+      if (window.ge && typeof window.ge.resize === 'function') window.ge.resize();
+    };
+
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
+    if (window.visualViewport && !window.__ganttViewportBound) {
+      window.__ganttViewportBound = true;
+      window.visualViewport.addEventListener('resize', refresh);
+    }
+    setTimeout(refresh, 300);
   }
 
   function fitInitialSplitter() {
