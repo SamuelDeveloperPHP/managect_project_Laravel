@@ -28,6 +28,8 @@
   --nx-z-overlay: 50;
   --nx-z-modal: 60;
   --nx-z-toast: 70;
+  --nx-company-name: "NexoCore Tecnologia";
+  --nx-company-footer: "Um produto NexoCore Tecnologia";
 }
 
 /* Trilha+ — Gestão de projetos: sóbrio, denso, legível por horas. */
