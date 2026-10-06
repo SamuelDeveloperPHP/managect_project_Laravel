@@ -418,7 +418,7 @@ Ganttalendar.prototype.drawTask = function (task) {
 
     //progress
     if (task.progress > 0) {
-      var progress = svg.rect(taskSvg, 0, "20%", (task.progress > 100 ? 100 : task.progress) + "%", "60%", {rx:"2", ry:"2",fill:"rgba(0,0,0,.4)"});
+      var progress = svg.rect(taskSvg, 0, "20%", (task.progress > 100 ? 100 : task.progress) + "%", "60%", {class:"taskProgressSVG", rx:"2", ry:"2",fill:"rgba(0,0,0,.4)"});
       if (dimensions.width > 50) {
         var textStyle = {fill:"#888", "font-size":"10px",class:"textPerc teamworkIcons",transform:"translate(5)"};
         if (task.progress > 100)
@@ -490,7 +490,7 @@ Ganttalendar.prototype.drawTask = function (task) {
 		//progress
 
 		if (baseline.progress > 0) {
-			var progress = svg.rect(taskSvg, 0, "20%", (baseline.progress > 100 ? 100 : baseline.progress) + "%", "60%", {rx: "2", ry: "2", fill: "rgba(0,0,0,.4)"});
+			var progress = svg.rect(taskSvg, 0, "20%", (baseline.progress > 100 ? 100 : baseline.progress) + "%", "60%", {class: "taskProgressSVG", rx: "2", ry: "2", fill: "rgba(0,0,0,.4)"});
 			/*if (dimensions.width > 50) {
 			 var textStyle = {fill:"#888", "font-size":"10px",class:"textPerc teamworkIcons",transform:"translate(5)"};
 			 if (baseline.progress > 100)
@@ -738,7 +738,12 @@ Ganttalendar.prototype.redrawTasks = function (drawAll) {
   }
 
   //creates rows grid
-  for (var i = 40; i <= self.master.editor.element.height(); i += self.master.rowHeight)
+  var gridStart = 40;
+  try {
+    var headRow = self.master.editor.gridified.find(".gdfTable").first().find("tr").first();
+    gridStart = Math.round(headRow.outerHeight()) || 40;
+  } catch (e) { /* keeps the default header height */ }
+  for (var i = gridStart; i <= self.master.editor.element.height(); i += self.master.rowHeight)
     self.svg.rect(gridGroup, 0, i, "100%", self.master.rowHeight, {class: "ganttLinesSVG"});
 
   // drawTodayLine

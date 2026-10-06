@@ -34,7 +34,20 @@ class ProjectGanttApiController extends Controller
             return response()->json(['success' => false, 'message' => 'O arquivo enviado excede o limite de 1 MB.'], 413);
         }
 
-        $validator = Validator::make($request->all(), [
+        $payload = $request->all();
+        // O editor cria tarefas novas com ids temporários ("tmp_..."): para o servidor elas são tarefas sem id.
+        if (isset($payload['tasks']) && is_array($payload['tasks'])) {
+            foreach ($payload['tasks'] as $index => $task) {
+                if (is_array($task) && array_key_exists('id', $task) && ! (is_int($task['id']) || (is_string($task['id']) && ctype_digit($task['id'])))) {
+                    $payload['tasks'][$index]['id'] = null;
+                }
+                if (is_array($task) && isset($task['backlogItemId']) && $task['backlogItemId'] === '') {
+                    $payload['tasks'][$index]['backlogItemId'] = null;
+                }
+            }
+        }
+
+        $validator = Validator::make($payload, [
             'tasks' => ['present', 'array', 'max:500'],
             'tasks.*.id' => ['nullable', 'integer'],
             'tasks.*.name' => ['nullable', 'string', 'max:190'],
@@ -55,6 +68,21 @@ class ProjectGanttApiController extends Controller
             'tasks.*.assigs.*.resourceId' => ['required_with:tasks.*.assigs', 'integer'],
             'tasks.*.assigs.*.roleId' => ['required_with:tasks.*.assigs', 'string', Rule::in(array_keys(self::ROLES))],
             'tasks.*.assigs.*.effort' => ['nullable', 'integer', 'between:0,31536000000'],
+        ], [
+            'tasks.*.id.integer' => 'Identificador de tarefa inválido.',
+            'tasks.*.level.*' => 'O nível da tarefa é inválido.',
+            'tasks.*.progress.*' => 'O progresso deve ser um número inteiro entre 0 e 100.',
+            'tasks.*.start.*' => 'A data inicial de uma tarefa é inválida.',
+            'tasks.*.end.*' => 'A data final de uma tarefa é inválida.',
+            'tasks.*.duration.*' => 'A duração deve ser de 1 a 3650 dias.',
+            'tasks.*.name.max' => 'O nome da tarefa pode ter no máximo 190 caracteres.',
+            'tasks.*.code.max' => 'O código da tarefa pode ter no máximo 80 caracteres.',
+            'tasks.*.assigs.*' => 'Um responsável da tarefa é inválido.',
+            'tasks.*.status.*' => 'O status da tarefa é inválido.',
+            'tasks.*.depends.*' => 'A lista de predecessoras é inválida.',
+            'tasks.*.backlogItemId.*' => 'O vínculo com o item do backlog é inválido.',
+            'tasks.max' => 'O cronograma aceita no máximo 500 tarefas.',
+            'tasks.*' => 'Os dados do cronograma são inválidos.',
         ]);
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
