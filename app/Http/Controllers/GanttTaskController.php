@@ -19,7 +19,19 @@ class GanttTaskController extends Controller
             'backlog' => $backlog->only('id', 'name', 'code'),
             'canManage' => request()->user()->hasPermission('can_manage_projects'),
             'ganttTemplates' => $this->templates(),
+            'assetVersion' => $this->assetVersion(),
         ]);
+    }
+
+    /** Cache-busting token: changes whenever one of the project-owned Gantt assets changes on disk. */
+    private function assetVersion(): string
+    {
+        $times = array_map(
+            fn (string $path) => (int) @filemtime(public_path($path)),
+            ['assets/gantt-app.js', 'assets/jquery-gantt/ganttDrawerSVG.js', 'assets/jquery-gantt/gantt-reference.css', 'assets/jquery-gantt/gantt-laravel.css'],
+        );
+
+        return (string) max($times);
     }
 
     private function templates(): string

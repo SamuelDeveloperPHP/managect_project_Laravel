@@ -737,13 +737,23 @@ Ganttalendar.prototype.redrawTasks = function (drawAll) {
     row++
   }
 
-  //creates rows grid
+  //creates rows grid: one stripe per real table row (so browser zoom / font rounding cannot drift),
+  //then plain stripes for the empty area below the last row
   var gridStart = 40;
   try {
     var headRow = self.master.editor.gridified.find(".gdfTable").first().find("tr").first();
     gridStart = Math.round(headRow.outerHeight()) || 40;
   } catch (e) { /* keeps the default header height */ }
-  for (var i = gridStart; i <= self.master.editor.element.height(); i += self.master.rowHeight)
+  var gridBottom = gridStart;
+  self.master.editor.element.find(".taskEditRow:visible").each(function () {
+    var rowEl = $(this);
+    var rowTop = rowEl.position().top + rowEl.offsetParent().scrollTop();
+    var rowHeight = rowEl.outerHeight();
+    if (!rowHeight) return;
+    self.svg.rect(gridGroup, 0, rowTop, "100%", rowHeight, {class: "ganttLinesSVG"});
+    gridBottom = rowTop + rowHeight;
+  });
+  for (var i = gridBottom; i <= self.master.editor.element.height(); i += self.master.rowHeight)
     self.svg.rect(gridGroup, 0, i, "100%", self.master.rowHeight, {class: "ganttLinesSVG"});
 
   // drawTodayLine
