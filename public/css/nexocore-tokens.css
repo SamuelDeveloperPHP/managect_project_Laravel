@@ -1,0 +1,154 @@
+/* Gerado por build.mjs a partir de tokens.json. Não edite à mão. */
+:root {
+  --nx-success-50: #e6f8f1;
+  --nx-success-500: #12b981;
+  --nx-success-600: #0e9c6d;
+  --nx-success-700: #0b7a55;
+  --nx-warning-50: #fff6e0;
+  --nx-warning-500: #e5a100;
+  --nx-warning-600: #b87a00;
+  --nx-warning-700: #8a5a00;
+  --nx-danger-50: #fdecec;
+  --nx-danger-500: #e5484d;
+  --nx-danger-600: #c0343a;
+  --nx-danger-700: #9a272c;
+  --nx-info-50: #e8f3fb;
+  --nx-info-500: #2f8fd1;
+  --nx-info-600: #1f72ab;
+  --nx-info-700: #175a88;
+  --nx-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --nx-focus-width: 2px;
+  --nx-focus-offset: 2px;
+  --nx-motion-fast: 120ms;
+  --nx-motion-base: 200ms;
+  --nx-motion-slow: 320ms;
+  --nx-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+  --nx-z-dropdown: 30;
+  --nx-z-sticky: 40;
+  --nx-z-overlay: 50;
+  --nx-z-modal: 60;
+  --nx-z-toast: 70;
+}
+
+/* Trilha+ — Gestão de projetos: sóbrio, denso, legível por horas. */
+[data-product="trilha"] {
+  --nx-brand-50: #eef5f5;
+  --nx-brand-100: #d8e8e9;
+  --nx-brand-200: #b3d0d3;
+  --nx-brand-300: #86b1b6;
+  --nx-brand-400: #4f8a91;
+  --nx-brand-500: #2a6670;
+  --nx-brand-600: #14505a;
+  --nx-brand-700: #0f3d44;
+  --nx-brand-800: #0b2e34;
+  --nx-brand-900: #082126;
+  --nx-brand-950: #05161a;
+  --nx-neutral-50: #f4f6f6;
+  --nx-neutral-100: #e9eded;
+  --nx-neutral-200: #d5dcdc;
+  --nx-neutral-300: #b7c2c2;
+  --nx-neutral-400: #8a9898;
+  --nx-neutral-500: #647474;
+  --nx-neutral-600: #4a5959;
+  --nx-neutral-700: #364343;
+  --nx-neutral-800: #222d2d;
+  --nx-neutral-900: #141d1e;
+  --nx-neutral-950: #0b1213;
+  --nx-signal-300: #e5b454;
+  --nx-signal-400: #d89e2b;
+  --nx-signal-500: #c98a12;
+  --nx-signal-600: #a8700c;
+  --nx-font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nx-font-display: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --nx-role-action: var(--nx-brand-600);
+  --nx-role-on-tint: var(--nx-brand-700);
+  --nx-radius-sm: 3px;
+  --nx-radius-md: 4px;
+  --nx-radius-lg: 6px;
+  --nx-radius-xl: 8px;
+  --nx-shadow-sm: 0 1px 0 rgba(20, 29, 30, 0.05);
+  --nx-shadow-md: 0 2px 6px rgba(20, 29, 30, 0.08);
+  --nx-shadow-lg: 0 8px 24px rgba(20, 29, 30, 0.12);
+}
+
+/* Tide ERP — PDV e fiscal: rápido, amigável, confiança no balcão. */
+[data-product="tide"] {
+  --nx-brand-50: #eef0ff;
+  --nx-brand-100: #e0e3ff;
+  --nx-brand-200: #c4c9ff;
+  --nx-brand-300: #a3a9ff;
+  --nx-brand-400: #8590ff;
+  --nx-brand-500: #6571ff;
+  --nx-brand-600: #4a53e6;
+  --nx-brand-700: #3b43c9;
+  --nx-brand-800: #2f36a3;
+  --nx-brand-900: #272d80;
+  --nx-brand-950: #181b4d;
+  --nx-neutral-50: #f6f7fc;
+  --nx-neutral-100: #f0f2fb;
+  --nx-neutral-200: #e7e9f4;
+  --nx-neutral-300: #cdd1e4;
+  --nx-neutral-400: #9a9fb8;
+  --nx-neutral-500: #6a708b;
+  --nx-neutral-600: #50567a;
+  --nx-neutral-700: #3a3f5c;
+  --nx-neutral-800: #272b48;
+  --nx-neutral-900: #1b1e35;
+  --nx-neutral-950: #12142a;
+  --nx-signal-300: #7ee2b8;
+  --nx-signal-400: #3fcf9c;
+  --nx-signal-500: #12b981;
+  --nx-signal-600: #0e9c6d;
+  --nx-font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nx-font-display: "Sora", "Plus Jakarta Sans", system-ui, sans-serif;
+  --nx-role-action: var(--nx-brand-600);
+  --nx-role-on-tint: var(--nx-brand-700);
+  --nx-radius-sm: 10px;
+  --nx-radius-md: 16px;
+  --nx-radius-lg: 24px;
+  --nx-radius-xl: 32px;
+  --nx-shadow-sm: 0 1px 2px rgba(27, 30, 53, 0.06), 0 2px 6px rgba(27, 30, 53, 0.05);
+  --nx-shadow-md: 0 12px 30px -12px rgba(50, 56, 120, 0.30), 0 4px 12px -6px rgba(27, 30, 53, 0.12);
+  --nx-shadow-lg: 0 30px 60px -20px rgba(50, 56, 120, 0.40), 0 10px 24px -12px rgba(27, 30, 53, 0.16);
+}
+
+/* SGI — Administrativo: formulários e tabelas, tema de painel clássico. */
+[data-product="sgi"] {
+  --nx-brand-50: #e6f8f4;
+  --nx-brand-100: #c9f0e5;
+  --nx-brand-200: #94e2cc;
+  --nx-brand-300: #5dcaa5;
+  --nx-brand-400: #3cc4a8;
+  --nx-brand-500: #1abb9c;
+  --nx-brand-600: #169f85;
+  --nx-brand-700: #128270;
+  --nx-brand-800: #0f6e56;
+  --nx-brand-900: #0a4e3f;
+  --nx-brand-950: #052f26;
+  --nx-neutral-50: #f7f7f7;
+  --nx-neutral-100: #eef0f2;
+  --nx-neutral-200: #e6e9ed;
+  --nx-neutral-300: #c7ced6;
+  --nx-neutral-400: #9aa8b6;
+  --nx-neutral-500: #73879c;
+  --nx-neutral-600: #5a6b7d;
+  --nx-neutral-700: #3f5266;
+  --nx-neutral-800: #2a3f54;
+  --nx-neutral-900: #1d2d3c;
+  --nx-neutral-950: #111b25;
+  --nx-signal-300: #f5c76b;
+  --nx-signal-400: #eeb03e;
+  --nx-signal-500: #e39a12;
+  --nx-signal-600: #b87a00;
+  --nx-font-sans: "Segoe UI", Roboto, Arial, sans-serif;
+  --nx-font-display: "Segoe UI", Roboto, Arial, sans-serif;
+  --nx-role-action: var(--nx-brand-700);
+  --nx-role-on-tint: var(--nx-brand-800);
+  --nx-radius-sm: 3px;
+  --nx-radius-md: 4px;
+  --nx-radius-lg: 6px;
+  --nx-radius-xl: 8px;
+  --nx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --nx-shadow-md: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --nx-shadow-lg: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+}
