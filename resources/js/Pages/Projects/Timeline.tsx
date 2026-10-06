@@ -42,19 +42,23 @@ const ganttScripts = [
     '/assets/gantt-app.js',
 ];
 
-function addStyles(): void {
-    for (const href of ganttStyles) {
+const versioned = (path: string, version: string): string => (version ? `${path}?v=${version}` : path);
+
+function addStyles(version: string): void {
+    for (const path of ganttStyles) {
+        const href = versioned(path, version);
         if (document.querySelector(`link[data-managect-gantt="${href}"]`)) continue;
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = href;
         link.dataset.managectGantt = href;
-        if (href.endsWith('ganttPrint.css')) link.media = 'print';
+        if (path.endsWith('ganttPrint.css')) link.media = 'print';
         document.head.appendChild(link);
     }
 }
 
-function addScript(src: string): Promise<void> {
+function addScript(path: string, version: string): Promise<void> {
+    const src = versioned(path, version);
     if (document.querySelector(`script[data-managect-gantt="${src}"]`)) return Promise.resolve();
     return new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -66,23 +70,23 @@ function addScript(src: string): Promise<void> {
     });
 }
 
-function loadGanttAssets(): Promise<void> {
+function loadGanttAssets(version: string): Promise<void> {
     const appWindow = window as GanttWindow;
     if (!appWindow.__managectGanttAssets) {
-        addStyles();
+        addStyles(version);
         appWindow.__managectGanttAssets = ganttScripts.reduce(
-            (chain, src) => chain.then(() => addScript(src)),
+            (chain, src) => chain.then(() => addScript(src, version)),
             Promise.resolve(),
         );
     }
     return appWindow.__managectGanttAssets;
 }
 
-export default function Timeline({ project, backlog, canManage, ganttTemplates }: { project: Project; backlog: Backlog; canManage: boolean; ganttTemplates: string }) {
+export default function Timeline({ project, backlog, canManage, ganttTemplates, assetVersion = '' }: { project: Project; backlog: Backlog; canManage: boolean; ganttTemplates: string; assetVersion?: string }) {
     useEffect(() => {
         document.body.dataset.projectId = String(project.id);
         document.body.dataset.backlogId = String(backlog.id);
-        loadGanttAssets()
+        loadGanttAssets(assetVersion)
             .then(() => document.dispatchEvent(new Event('managect:gantt:load')))
             .catch((error: Error) => {
                 const toast = document.getElementById('gantt-toast');
@@ -92,7 +96,7 @@ export default function Timeline({ project, backlog, canManage, ganttTemplates }
                     toast.style.display = 'block';
                 }
             });
-    }, [project.id, backlog.id]);
+    }, [project.id, backlog.id, assetVersion]);
 
     return <>
         <Head title={`${project.code} — Cronograma`} />
