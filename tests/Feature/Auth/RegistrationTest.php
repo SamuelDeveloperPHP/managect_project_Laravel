@@ -86,4 +86,25 @@ class RegistrationTest extends TestCase
 
         $this->get('/register')->assertOk();
     }
+    public function test_registration_accepts_a_cpf_as_the_company_document(): void
+    {
+        $this->post('/register', [
+            'name' => 'Maria Autonoma', 'company_name' => 'Maria Consultoria',
+            'document_type' => 'CPF', 'company_document' => '529.982.247-25', 'cpf' => '529.982.247-25',
+            'email' => 'maria@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('companies', ['name' => 'Maria Consultoria', 'document_type' => 'CPF', 'document_number' => '52998224725', 'cnpj' => null]);
+    }
+
+    public function test_registration_rejects_a_cnpj_typed_as_cpf(): void
+    {
+        $this->post('/register', [
+            'name' => 'Maria', 'company_name' => 'Maria Consultoria',
+            'document_type' => 'CPF', 'company_document' => '11.222.333/0001-81', 'cpf' => '529.982.247-25',
+            'email' => 'maria@example.com', 'password' => 'long-secure-password', 'password_confirmation' => 'long-secure-password',
+        ])->assertSessionHasErrors('company_document');
+        $this->assertGuest();
+    }
 }

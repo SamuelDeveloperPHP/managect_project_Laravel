@@ -36,19 +36,22 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $documentType = strtoupper((string) $request->input('document_type', 'CNPJ'));
         $request->merge([
-            'company_cnpj' => preg_replace('/\D+/', '', (string) $request->input('company_cnpj')),
+            'document_type' => $documentType,
+            'company_document' => preg_replace('/\D+/', '', (string) ($request->input('company_document') ?? $request->input('company_cnpj'))),
             'cpf' => preg_replace('/\D+/', '', (string) $request->input('cpf')),
         ]);
 
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'company_name' => 'required|string|max:120',
-            'company_cnpj' => ['required', 'digits:14', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (! BrazilianTaxDocument::isValid('CNPJ', (string) $value)) {
-                    $fail('Informe um CNPJ válido.');
+            'document_type' => ['required', Rule::in(['CNPJ', 'CPF'])],
+            'company_document' => ['required', 'digits:'.($documentType === 'CPF' ? 11 : 14), function (string $attribute, mixed $value, \Closure $fail) use ($documentType): void {
+                if (! BrazilianTaxDocument::isValid($documentType, (string) $value)) {
+                    $fail('Informe um '.$documentType.' válido.');
                 }
-            }, Rule::unique('companies', 'document_number')->where('document_type', 'CNPJ')],
+            }, Rule::unique('companies', 'document_number')->where('document_type', $documentType)],
             'cpf' => ['required', 'digits:11', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
                     $fail('Informe um CPF válido.');
@@ -70,13 +73,13 @@ class RegisteredUserController extends Controller
                 $slug = $baseSlug.'-'.$suffix++;
             }
 
-            $documentNumber = $data['company_cnpj'];
+            $documentNumber = $data['company_document'];
             $company = Company::create([
                 'name' => $request->string('company_name'),
                 'slug' => $slug,
-                'document_type' => 'CNPJ',
+                'document_type' => $data['document_type'],
                 'document_number' => $documentNumber,
-                'cnpj' => $documentNumber,
+                'cnpj' => $data['document_type'] === 'CNPJ' ? $documentNumber : null,
                 'secondary_recovery_email' => $data['secondary_recovery_email'] ?? null,
                 'is_active' => true,
             ]);
