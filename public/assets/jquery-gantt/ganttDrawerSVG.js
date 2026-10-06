@@ -418,7 +418,7 @@ Ganttalendar.prototype.drawTask = function (task) {
 
     //progress
     if (task.progress > 0) {
-      var progress = svg.rect(taskSvg, 0, "20%", (task.progress > 100 ? 100 : task.progress) + "%", "60%", {class:"taskProgressSVG", rx:"2", ry:"2",fill:"rgba(0,0,0,.4)"});
+      var progress = svg.rect(taskSvg, 0, "32%", (task.progress > 100 ? 100 : task.progress) + "%", "36%", {class:"taskProgressSVG", rx:"2", ry:"2",fill:"rgba(0,0,0,.4)"});
       if (dimensions.width > 50) {
         var textStyle = {fill:"#888", "font-size":"10px",class:"textPerc teamworkIcons",transform:"translate(5)"};
         if (task.progress > 100)
@@ -490,7 +490,7 @@ Ganttalendar.prototype.drawTask = function (task) {
 		//progress
 
 		if (baseline.progress > 0) {
-			var progress = svg.rect(taskSvg, 0, "20%", (baseline.progress > 100 ? 100 : baseline.progress) + "%", "60%", {class: "taskProgressSVG", rx: "2", ry: "2", fill: "rgba(0,0,0,.4)"});
+			var progress = svg.rect(taskSvg, 0, "32%", (baseline.progress > 100 ? 100 : baseline.progress) + "%", "36%", {class: "taskProgressSVG", rx: "2", ry: "2", fill: "rgba(0,0,0,.4)"});
 			/*if (dimensions.width > 50) {
 			 var textStyle = {fill:"#888", "font-size":"10px",class:"textPerc teamworkIcons",transform:"translate(5)"};
 			 if (baseline.progress > 100)
