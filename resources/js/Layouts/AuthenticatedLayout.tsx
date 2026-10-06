@@ -89,7 +89,7 @@ export default function Authenticated({
                 </div>
             </aside>
 
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 flex-col">
                 <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:hidden">
                     <button type="button" aria-label="Abrir menu" aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -102,7 +102,7 @@ export default function Authenticated({
                 </div>
 
                 {header && <header className="border-b border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{header}</div></header>}
-                <main>{children}</main>
+                <main className="flex-1">{children}</main>
                 <footer className="border-t border-slate-200 px-4 py-4 sm:px-6 lg:px-8"><ProductFooter /></footer>
             </div>
         </div>
