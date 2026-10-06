@@ -69,4 +69,20 @@ class GanttCrudTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('message', 'O progresso deve ser um número inteiro entre 0 e 100.');
     }
+
+    public function test_predecessors_are_saved_and_circular_ones_are_rejected(): void
+    {
+        [$admin, $project, $backlog] = $this->scenario();
+        $url = route('projects.gantt.save', [$project, $backlog]);
+        $tasks = fn (string $secondDepends, string $firstDepends = '') => [
+            $this->task(['id' => 'tmp_1', 'depends' => $firstDepends]),
+            $this->task(['id' => 'tmp_2', 'name' => 'Segunda', 'code' => 'T2', 'depends' => $secondDepends]),
+        ];
+
+        $this->actingAs($admin)->postJson($url, ['tasks' => $tasks('1:2')])->assertOk();
+        $this->assertDatabaseHas('gantt_tasks', ['name' => 'Segunda', 'depends' => '1:2']);
+
+        $response = $this->actingAs($admin)->postJson($url, ['tasks' => $tasks('1', '2')])->assertStatus(422);
+        $this->assertStringContainsString('ciclo', $response->json('message'));
+    }
 }

@@ -200,7 +200,48 @@ class ProjectGanttApiController extends Controller
             $prepared[$index]['end_at'] = $end;
         }
 
+        $this->assertNoDependencyCycle($prepared);
+
         return $prepared;
+    }
+
+    /** Predecessoras em ciclo travariam o cronograma ao reabrir; recusamos antes de gravar. */
+    private function assertNoDependencyCycle(array $tasks): void
+    {
+        $graph = [];
+        foreach ($tasks as $index => $task) {
+            $graph[$index + 1] = [];
+            foreach (array_filter(explode(',', trim((string) ($task['depends'] ?? '')))) as $dependency) {
+                if (preg_match('/^([1-9][0-9]*)/', trim($dependency), $matches)) {
+                    $graph[$index + 1][] = (int) $matches[1];
+                }
+            }
+        }
+
+        $state = [];
+        $visit = function (int $node) use (&$visit, &$state, $graph): bool {
+            if (($state[$node] ?? 0) === 1) {
+                return true;
+            }
+            if (($state[$node] ?? 0) === 2) {
+                return false;
+            }
+            $state[$node] = 1;
+            foreach ($graph[$node] ?? [] as $next) {
+                if ($visit($next)) {
+                    return true;
+                }
+            }
+            $state[$node] = 2;
+
+            return false;
+        };
+
+        foreach (array_keys($graph) as $node) {
+            if ($visit($node)) {
+                throw new \RuntimeException('As predecessoras formam um ciclo (uma tarefa depende dela mesma). Remova o vínculo circular e salve de novo.');
+            }
+        }
     }
 
     private function projectPayload(Project $project, ProjectBacklog $backlog): array

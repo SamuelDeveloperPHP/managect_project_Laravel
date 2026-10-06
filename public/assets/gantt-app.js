@@ -152,14 +152,25 @@
 
   function projectRequest(url, options) {
     options = options || {};
+    options.credentials = 'same-origin';
+    options.redirect = 'manual';
     options.headers = Object.assign({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'X-CSRF-Token': csrfToken ? csrfToken.content : ''
     }, options.headers || {});
 
-    return fetch(url, options).then(function (response) {
-      return response.json().then(function (data) {
+    return fetch(url, options).catch(function () {
+      throw new Error('Não foi possível falar com o servidor. Verifique a conexão e se o sistema está no ar, depois tente salvar de novo. Suas alterações continuam na tela.');
+    }).then(function (response) {
+      // Um redirecionamento (sessão expirada ou empresa não selecionada) não devolve JSON.
+      if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+        throw new Error('Sua sessão expirou ou a empresa não está selecionada. Abra o sistema em outra aba, entre novamente e volte a salvar; suas alterações continuam nesta tela.');
+      }
+
+      return response.json().catch(function () {
+        throw new Error('O servidor respondeu de forma inesperada (código ' + response.status + '). Tente novamente em instantes.');
+      }).then(function (data) {
         if (!response.ok || data.success === false) {
           throw new Error(data.message || 'Nao foi possivel processar o cronograma.');
         }
