@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import ProductFooter from '@/Components/ProductFooter';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -102,6 +103,7 @@ export default function Authenticated({
 
                 {header && <header className="border-b border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{header}</div></header>}
                 <main>{children}</main>
+                <footer className="border-t border-slate-200 px-4 py-4 sm:px-6 lg:px-8"><ProductFooter /></footer>
             </div>
         </div>
     );

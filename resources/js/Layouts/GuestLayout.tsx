@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import ProductFooter from '@/Components/ProductFooter';
 
 const levels = [
     { name: 'Projeto', text: 'Cliente, líder, equipe, prazo e orçamento.' },
@@ -41,7 +42,7 @@ export default function Guest({ children }: PropsWithChildren) {
                         {children}
                     </section>
                     <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-slate-500">
-                        <span>© {new Date().getFullYear()} Trilha+</span>
+                        <ProductFooter />
                         <Link href="/" className="font-medium text-slate-600 hover:text-indigo-700">Página inicial</Link>
                     </footer>
                 </div>
