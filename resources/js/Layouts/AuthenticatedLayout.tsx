@@ -47,44 +47,44 @@ export default function Authenticated({
     ];
 
     return (
-        <div className="min-h-screen bg-[#f5f6fa] md:flex">
+        <div className="min-h-screen bg-neutral-50 md:flex">
             {sidebarOpen && <button type="button" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-30 bg-slate-950/35 md:hidden" />}
 
-            <aside className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-slate-200 bg-white transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex h-[76px] shrink-0 items-center border-b border-slate-100 px-6">
-                    <Link href={route('projects.index')} onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                        <ApplicationLogo className="h-9 w-9 fill-current text-indigo-600" />
-                        <span className="text-base font-bold tracking-tight text-slate-900">Trilha+</span>
+            <aside className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-white/5 bg-brand-950 text-brand-100 transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex h-[76px] shrink-0 items-center border-b border-white/10 px-6">
+                    <Link href={route('projects.index')} onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal-300">
+                        <ApplicationLogo className="h-9 w-9" />
+                        <span className="font-display text-lg font-extrabold tracking-tight text-white">Trilha+</span>
                     </Link>
-                    <button type="button" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-slate-100 md:hidden">
+                    <button type="button" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)} className="ml-auto rounded-lg p-2 text-brand-300 hover:bg-white/10 md:hidden">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
                     </button>
                 </div>
 
                 <div className="px-4 pt-6">
-                    <p className="px-3 text-[10px] font-semibold text-slate-400">Workspace</p>
+                    <p className="px-3 text-[11px] font-semibold text-brand-400">Workspace</p>
                     <nav aria-label="Navegação principal" className="mt-3 space-y-1">
                         {navigation.map((item) => (
-                            <Link key={item.label} href={item.href} onClick={() => setSidebarOpen(false)} aria-current={item.active ? 'page' : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${item.active ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+                            <Link key={item.label} href={item.href} onClick={() => setSidebarOpen(false)} aria-current={item.active ? 'page' : undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal-300 ${item.active ? 'bg-white/10 text-white' : 'text-brand-200 hover:bg-white/5 hover:text-white'}`}>
                                 <NavigationIcon name={item.icon} />
                                 <span>{item.label}</span>
-                                {item.active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-600" />}
+                                {item.active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-signal-300" />}
                             </Link>
                         ))}
                     </nav>
                 </div>
 
-                <div className="mt-auto border-t border-slate-100 p-4">
-                    <div className="mb-3 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-                        {user.profile_photo_url ? <img src={user.profile_photo_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-slate-200 object-cover" /> : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700" aria-hidden="true">{user.name.trim().charAt(0).toUpperCase()}</div>}
+                <div className="mt-auto border-t border-white/10 p-4">
+                    <div className="mb-3 flex items-center gap-3 rounded-xl bg-white/5 p-3">
+                        {user.profile_photo_url ? <img src={user.profile_photo_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-white/20 object-cover" /> : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-200 text-sm font-semibold text-brand-900" aria-hidden="true">{user.name.trim().charAt(0).toUpperCase()}</div>}
                         <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-800">{user.name}</p>
-                            <p className="truncate text-xs text-slate-500">{company?.name ?? user.email}</p>
+                            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+                            <p className="truncate text-xs text-brand-300">{company?.name ?? user.email}</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                        <Link href={route('profile.edit')} onClick={() => setSidebarOpen(false)} className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">Perfil</Link>
-                        <Link href={route('logout')} method="post" as="button" onClick={() => setSidebarOpen(false)} className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">Sair</Link>
+                        <Link href={route('profile.edit')} onClick={() => setSidebarOpen(false)} className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-brand-200 transition hover:bg-white/10 hover:text-white">Perfil</Link>
+                        <Link href={route('logout')} method="post" as="button" onClick={() => setSidebarOpen(false)} className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-brand-200 transition hover:bg-white/10 hover:text-white">Sair</Link>
                     </div>
                 </div>
             </aside>
