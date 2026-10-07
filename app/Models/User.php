@@ -115,11 +115,10 @@ class User extends Authenticatable
         return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
     }
 
-    /** Este papel precisa ter o segundo fator ativo (config security.two_factor_required / two_factor_roles). */
+    /** O sistema exige o segundo fator de TODOS os usuários (config security.two_factor_required). */
     public function requiresTwoFactor(): bool
     {
-        return (bool) config('security.two_factor_required')
-            && in_array($this->role, (array) config('security.two_factor_roles'), true);
+        return (bool) config('security.two_factor_required');
     }
 
     /** Falta ativar o segundo fator e o sistema exige isso. */

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Quem tem papel que exige segundo fator (administrador e Master) e ainda não o ativou só alcança a tela de
+ * Quando o segundo fator é exigido (todos os usuários) e a pessoa ainda não o ativou só alcança a tela de
  * ativação (no Perfil) e o logout. Todo o resto redireciona para lá (ou responde 403 em chamadas de API).
  */
 class RequireTwoFactorEnrollment
