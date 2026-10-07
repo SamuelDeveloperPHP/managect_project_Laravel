@@ -117,7 +117,7 @@ test('o administrador exporta e apaga os dados de quem saiu, com a própria senh
     const other = await (await browser.newContext()).newPage();
     await login(other, LEAVER);
     await expect(other).toHaveURL(/\/login/);
-    await expect(other.locator('p.text-red-600')).toBeVisible();
+    await expect(other.getByText('E-mail ou senha incorretos.')).toBeVisible();
 });
 
 test('a própria pessoa exclui a conta: os dados somem e o acesso termina', async ({ page }) => {
