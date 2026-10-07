@@ -64,14 +64,16 @@ class AdminDashboardAndTimelineTest extends TestCase
                 ->component('Admin/Dashboard')
                 ->where('selectedCompanyId', null)
                 ->where('stats.team_members', 3)
-                ->has('companyMetrics', 2)
-                ->where('companyMetrics.0.name', 'Empresa A')
-                ->where('companyMetrics.0.total_users', 3)
-                ->where('companyMetrics.0.active_users', 2)
-                ->where('companyMetrics.0.online_users', 1)
-                ->where('companyMetrics.0.offline_users', 1)
-                ->where('companyMetrics.1.name', 'Empresa B')
-                ->where('companyMetrics.1.online_users', 0));
+                ->has('companyMetrics', Company::query()->count())
+                ->where('companyMetrics', function ($metrics) {
+                    // A ordem depende dos nomes das demais empresas (a da plataforma tem nome aleatório): confere por nome.
+                    $byName = collect($metrics)->keyBy('name');
+                    $a = $byName['Empresa A'];
+                    $b = $byName['Empresa B'];
+
+                    return $a['total_users'] === 3 && $a['active_users'] === 2 && $a['online_users'] === 1 && $a['offline_users'] === 1
+                        && $b['online_users'] === 0;
+                }));
     }
 
     public function test_master_can_open_company_list_and_keep_selected_company_scope_while_navigating(): void
@@ -90,8 +92,9 @@ class AdminDashboardAndTimelineTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Master/Companies')
-                ->has('companies', 2)
-                ->where('companies.0.name', 'Empresa A'));
+                ->has('companies', Company::query()->count())
+                ->where('companies', fn ($companies) => collect($companies)->pluck('name')->contains('Empresa A')
+                    && collect($companies)->pluck('name')->contains('Empresa B')));
 
         $this->post(route('master.companies.select'), ['company_id' => $companyA->id])->assertRedirect(route('dashboard'));
         $this->get(route('projects.index'))

@@ -36,6 +36,10 @@ class BackupAndMailReadinessTest extends TestCase
 
     public function test_dump_and_restore_round_trip_keeps_tricky_text_intact(): void
     {
+        // A restauração recria tabelas (DDL), o que em MySQL confirma a transação do teste e deixaria dados para trás.
+        // Em MySQL essa prova é feita de ponta a ponta pelo job "Backup e restauração (MySQL)" do CI.
+        $this->skipUnlessSqlite();
+
         $names = ["O'Brien & Filhos; DROP TABLE x;", "Linha 1\nLinha 2 -- não é comentário", 'Barra \\ invertida "aspas" ção 日本'];
         foreach ($names as $i => $name) {
             Company::factory()->create(['name' => $name, 'slug' => 'empresa-'.$i]);
@@ -57,6 +61,13 @@ class BackupAndMailReadinessTest extends TestCase
             DB::table('companies')->count(),
             $target->table('companies')->count(),
         );
+    }
+
+    private function skipUnlessSqlite(): void
+    {
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Teste destrutivo: roda apenas em SQLite (em MySQL, ver o job de CI de backup).');
+        }
     }
 
     public function test_backup_command_writes_files_marker_and_prunes_old_sets(): void
@@ -154,7 +165,7 @@ class BackupAndMailReadinessTest extends TestCase
         $file = $this->dir.'/db-test.sql.gz';
         $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
 
-        $analysis = (new SqlRestorer())->analyze($file, false);
+        $analysis = (new SqlRestorer())->analyze($file, DB::connection()->getDriverName() !== 'sqlite');
 
         $this->assertSame($stats['tables']['companies'], $analysis['companies']);
         $this->assertSame(3, $analysis['companies']);
