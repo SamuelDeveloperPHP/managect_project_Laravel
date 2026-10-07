@@ -9,6 +9,7 @@ use App\Support\Auth\TwoFactor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -216,7 +217,7 @@ class TwoFactorTest extends TestCase
             ->assertSessionHas('recovery_codes', fn ($codes) => count($codes) === 8 && ! array_intersect($codes, $oldCodes));
     }
 
-    public function test_an_optional_user_can_disable_it_with_the_password(): void
+    public function test_when_not_required_a_user_can_disable_it_with_the_password(): void
     {
         [$user] = $this->enrolledUser(['role' => 'user']);
         $this->actingAs($user);
@@ -229,23 +230,31 @@ class TwoFactorTest extends TestCase
         $this->assertNull($user->fresh()->two_factor_secret);
     }
 
-    public function test_roles_that_require_the_second_factor_cannot_turn_it_off(): void
+    #[DataProvider('everyRole')]
+    public function test_when_required_nobody_can_turn_it_off(string $role): void
     {
         config(['security.two_factor_required' => true]);
-        [$admin] = $this->enrolledUser(['role' => 'admin']);
-        $this->actingAs($admin);
+        [$user] = $this->enrolledUser(['role' => $role]);
+        $this->actingAs($user);
 
         $this->delete(route('two-factor.disable'), ['password' => 'uma-senha-longa-123'])->assertSessionHasErrors('password');
-        $this->assertTrue($admin->fresh()->hasTwoFactorEnabled());
+        $this->assertTrue($user->fresh()->hasTwoFactorEnabled());
+    }
+
+    /** @return array<string, array{string}> */
+    public static function everyRole(): array
+    {
+        return ['admin' => ['admin'], 'membro' => ['user']];
     }
 
     // ---------- exigência ----------
 
-    public function test_an_admin_without_the_second_factor_is_sent_to_enrollment_when_it_is_required(): void
+    #[DataProvider('everyRole')]
+    public function test_anyone_without_the_second_factor_is_sent_to_enrollment_when_it_is_required(string $role): void
     {
         config(['security.two_factor_required' => true]);
         $company = Company::factory()->create();
-        $admin = User::factory()->create(['company_id' => $company->id, 'role' => 'admin']);
+        $admin = User::factory()->create(['company_id' => $company->id, 'role' => $role]);
         $this->actingAs($admin);
 
         $this->get('/dashboard')->assertRedirect(route('profile.edit'));
@@ -256,11 +265,12 @@ class TwoFactorTest extends TestCase
         $this->post('/logout')->assertRedirect('/');
     }
 
-    public function test_the_requirement_does_not_touch_regular_users_or_enrolled_admins(): void
+    public function test_the_requirement_does_not_touch_those_who_already_enrolled(): void
     {
         config(['security.two_factor_required' => true]);
         $company = Company::factory()->create();
-        $member = User::factory()->create(['company_id' => $company->id, 'role' => 'user']);
+
+        [$member] = $this->enrolledUser(['company_id' => $company->id, 'role' => 'user']);
         $this->actingAs($member)->get('/projects')->assertOk();
 
         [$admin] = $this->enrolledUser(['company_id' => $company->id, 'role' => 'admin']);
