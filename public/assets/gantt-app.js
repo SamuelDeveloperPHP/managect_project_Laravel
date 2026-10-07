@@ -188,16 +188,22 @@
 
     projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/backlogs/' + document.body.getAttribute('data-backlog-id') + '/gantt')
       .then(function (data) {
-        window.ge = new GanttMaster();
-        tuneLargeTimeline(data.project);
-        window.ge.set100OnClose = true;
-        window.ge.shrinkParent = true;
-        window.ge.resourceUrl = '/assets/jquery-gantt/res/';
-        window.ge.init($('#workSpace'));
-        updateFullscreenButton(false);
+        // Recarregar (ex.: depois de um conflito) reaproveita o editor que já está na tela. Criar outro sobre o
+        // mesmo #workSpace duplicava a grade e os atalhos, e a edição antiga continuava visível ao lado da nova.
+        if (!window.ge) {
+          window.ge = new GanttMaster();
+          window.ge.set100OnClose = true;
+          window.ge.shrinkParent = true;
+          window.ge.resourceUrl = '/assets/jquery-gantt/res/';
+          tuneLargeTimeline(data.project);
+          window.ge.init($('#workSpace'));
+          updateFullscreenButton(false);
 
-        if (typeof window.loadI18n === 'function') {
-          window.loadI18n();
+          if (typeof window.loadI18n === 'function') {
+            window.loadI18n();
+          }
+        } else {
+          tuneLargeTimeline(data.project);
         }
 
         window.ganttRevision = data.project.revision;
