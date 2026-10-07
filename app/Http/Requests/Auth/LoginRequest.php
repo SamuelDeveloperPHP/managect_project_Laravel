@@ -56,7 +56,7 @@ class LoginRequest extends FormRequest
         ], $this->boolean('remember'))) {
             $this->recordFailedAttempt();
 
-            throw ValidationException::withMessages([
+            throw $this->loginFailure([
                 'email' => trans('auth.failed'),
             ]);
         }
@@ -69,7 +69,7 @@ class LoginRequest extends FormRequest
             Auth::logout();
             $this->recordFailedAttempt();
 
-            throw ValidationException::withMessages([
+            throw $this->loginFailure([
                 'email' => trans('auth.failed'),
             ]);
         }
@@ -104,12 +104,21 @@ class LoginRequest extends FormRequest
 
         event(new Lockout($this));
 
-        throw ValidationException::withMessages([
+        throw $this->loginFailure([
             'email' => trans('auth.throttle', [
                 'seconds' => $blockedFor,
                 'minutes' => ceil($blockedFor / 60),
             ]),
         ]);
+    }
+
+    /**
+     * Erro de login volta SEMPRE para o formulário de login. Sem isso o Laravel volta para a "página anterior" da
+     * sessão, que depois de uma navegação do Inertia (home -> Entrar) é a página inicial, e a pessoa nunca vê a mensagem.
+     */
+    private function loginFailure(array $messages): ValidationException
+    {
+        return ValidationException::withMessages($messages)->redirectTo(route('login'));
     }
 
     private function recordFailedAttempt(): void
