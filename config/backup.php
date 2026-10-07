@@ -29,6 +29,13 @@ return [
     // Disco opcional (config/filesystems.php) que recebe uma cópia de cada backup.
     'copy_disk' => env('BACKUP_COPY_DISK'),
 
+    // Chave para criptografar os backups em repouso (php artisan backup:key). Vazia = sem criptografia.
+    // Guarde uma cópia da chave FORA do servidor: sem ela os backups cifrados não podem ser restaurados.
+    'encryption_key' => env('BACKUP_ENCRYPTION_KEY', ''),
+
+    // E-mail avisado quando o backup automático falha.
+    'notify_email' => env('BACKUP_NOTIFY_EMAIL', ''),
+
     // Horário diário (fuso da aplicação).
     'time' => env('BACKUP_TIME', '02:30'),
 

@@ -67,6 +67,10 @@ class Preflight extends Command
             $finished !== null && $finished->gt(now()->subHours($max)),
             $finished ? 'último: '.$finished->format('d/m/Y H:i') : 'nenhum backup encontrado — rode php artisan backup:run e confira o cron',
         );
+        $verify = is_file(dirname($marker).DIRECTORY_SEPARATOR.'last-verify.json') ? json_decode((string) File::get(dirname($marker).DIRECTORY_SEPARATOR.'last-verify.json'), true) : null;
+        $verified = isset($verify['verified_at']) ? CarbonCarbon::parse($verify['verified_at']) : null;
+        $check('Backup verificado na última semana', $verified !== null && $verified->gt(now()->subDays(8)), $verified ? 'última verificação: '.$verified->format('d/m/Y H:i') : 'rode php artisan backup:verify', false);
+        $check('Backup criptografado', (string) config('backup.encryption_key') !== '', config('backup.encryption_key') ? 'BACKUP_ENCRYPTION_KEY definida' : 'sem BACKUP_ENCRYPTION_KEY: o backup contém dados pessoais em texto aberto', false);
         $check('Cópia externa do backup', (bool) config('backup.copy_disk'), config('backup.copy_disk') ? 'disco: '.config('backup.copy_disk') : 'BACKUP_COPY_DISK vazio: backup só neste servidor', false);
     }
 }
