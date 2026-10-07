@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Support\Backup\BackupCrypto;
+use App\Support\Backup\BackupSet;
 use App\Support\Backup\DatabaseDumper;
 use App\Support\Backup\SqlRestorer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use RuntimeException;
 use Tests\TestCase;
 
 class BackupAndMailReadinessTest extends TestCase
@@ -140,5 +143,90 @@ class BackupAndMailReadinessTest extends TestCase
         $existing->assertSessionHasNoErrors()->assertSessionHas('status');
         $this->assertSame(session('status'), $unknown->getSession()->get('status'));
         $unknown->assertSessionHasNoErrors();
+    }
+
+    public function test_analyze_counts_rows_even_when_text_contains_parentheses_and_quotes(): void
+    {
+        foreach (['valor ),( enganoso', "aspa ' simples (", 'normal'] as $i => $name) {
+            Company::factory()->create(['name' => $name, 'slug' => 'c-'.$i]);
+        }
+        File::ensureDirectoryExists($this->dir);
+        $file = $this->dir.'/db-test.sql.gz';
+        $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
+
+        $analysis = (new SqlRestorer())->analyze($file, false);
+
+        $this->assertSame($stats['tables']['companies'], $analysis['companies']);
+        $this->assertSame(3, $analysis['companies']);
+    }
+
+    public function test_encryption_round_trips_and_rejects_tampering_truncation_and_wrong_keys(): void
+    {
+        File::ensureDirectoryExists($this->dir);
+        $plain = $this->dir.'/plain.bin';
+        File::put($plain, random_bytes(200_000)); // mais de um bloco de 64 KB
+        $key = sodium_crypto_secretstream_xchacha20poly1305_keygen();
+        $crypto = new BackupCrypto();
+
+        $crypto->encryptFile($plain, $this->dir.'/c.enc', $key);
+        $crypto->decryptFile($this->dir.'/c.enc', $this->dir.'/out.bin', $key);
+        $this->assertSame(hash_file('sha256', $plain), hash_file('sha256', $this->dir.'/out.bin'));
+        $this->assertNotSame(File::get($plain), File::get($this->dir.'/c.enc'));
+
+        $bytes = File::get($this->dir.'/c.enc');
+        File::put($this->dir.'/tampered.enc', substr_replace($bytes, chr(ord($bytes[100]) ^ 1), 100, 1));
+        File::put($this->dir.'/truncated.enc', substr($bytes, 0, strlen($bytes) - 70_000));
+
+        foreach ([['tampered.enc', $key], ['truncated.enc', $key], ['c.enc', sodium_crypto_secretstream_xchacha20poly1305_keygen()]] as [$name, $useKey]) {
+            try {
+                $crypto->decryptFile($this->dir.'/'.$name, $this->dir.'/never.bin', $useKey);
+                $this->fail("{$name} deveria ser rejeitado");
+            } catch (RuntimeException $exception) {
+                $this->assertNotSame('', $exception->getMessage());
+            }
+        }
+    }
+
+    public function test_encrypted_backup_is_verified_and_a_corrupted_one_is_caught(): void
+    {
+        Company::factory()->create(['name' => 'Empresa Cifrada', 'slug' => 'cifrada']);
+        config(['backup.encryption_key' => BackupCrypto::generateKey()]);
+
+        $this->artisan('backup:run', ['--no-files' => true])->assertSuccessful();
+
+        $this->assertEmpty(glob($this->dir.'/db-*.sql.gz'), 'o dump em texto aberto não pode sobrar');
+        $encrypted = glob($this->dir.'/db-*.sql.gz.enc');
+        $this->assertCount(1, $encrypted);
+        $this->artisan('backup:verify')->assertSuccessful();
+        $this->assertFileExists($this->dir.'/last-verify.json');
+
+        $bytes = File::get($encrypted[0]);
+        File::put($encrypted[0], substr_replace($bytes, chr(ord($bytes[50]) ^ 1), 50, 1));
+        $this->artisan('backup:verify')->assertFailed();
+    }
+
+    public function test_verify_fails_when_the_dump_no_longer_matches_the_manifest(): void
+    {
+        Company::factory()->create();
+        $this->artisan('backup:run', ['--no-files' => true])->assertSuccessful();
+        $this->artisan('backup:verify')->assertSuccessful();
+
+        $set = BackupSet::latest($this->dir);
+        $manifest = $set->manifest;
+        $manifest['tables']['companies'] += 5; // o manifesto promete mais linhas do que o dump tem
+        $path = BackupSet::manifestPath($this->dir, $set->stamp);
+        File::put($path, json_encode($manifest));
+
+        $this->artisan('backup:verify')->assertFailed();
+    }
+
+    public function test_restore_refuses_a_file_whose_checksum_does_not_match_the_manifest(): void
+    {
+        Company::factory()->create();
+        $this->artisan('backup:run', ['--no-files' => true])->assertSuccessful();
+        $file = glob($this->dir.'/db-*.sql.gz')[0];
+        File::append($file, 'lixo');
+
+        $this->artisan('backup:restore', ['file' => $file, '--force' => true])->assertFailed();
     }
 }
