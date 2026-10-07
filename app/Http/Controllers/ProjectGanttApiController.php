@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\GanttRevisionConflict;
 use App\Models\GanttTask;
 use App\Models\Project;
 use App\Models\ProjectBacklogItem;
@@ -48,6 +49,7 @@ class ProjectGanttApiController extends Controller
         }
 
         $validator = Validator::make($payload, [
+            'revision' => ['required', 'integer', 'min:0'],
             'tasks' => ['present', 'array', 'max:500'],
             'tasks.*.id' => ['nullable', 'integer'],
             'tasks.*.name' => ['nullable', 'string', 'max:190'],
@@ -81,6 +83,7 @@ class ProjectGanttApiController extends Controller
             'tasks.*.status.*' => 'O status da tarefa é inválido.',
             'tasks.*.depends.*' => 'A lista de predecessoras é inválida.',
             'tasks.*.backlogItemId.*' => 'O vínculo com o item do backlog é inválido.',
+            'revision.*' => 'A página do cronograma está desatualizada. Recarregue-a e tente salvar de novo.',
             'tasks.max' => 'O cronograma aceita no máximo 500 tarefas.',
             'tasks.*' => 'Os dados do cronograma são inválidos.',
         ]);
@@ -113,7 +116,15 @@ class ProjectGanttApiController extends Controller
                 }
             }
 
-            DB::transaction(function () use ($prepared, $existing, $project, $backlog, $companyId, $request): void {
+            $expectedRevision = (int) $validator->validated()['revision'];
+
+            DB::transaction(function () use ($prepared, $existing, $project, $backlog, $companyId, $request, $expectedRevision): void {
+                // Trava a linha do backlog: duas gravações simultâneas passam uma de cada vez.
+                $current = ProjectBacklog::query()->whereKey($backlog->id)->lockForUpdate()->firstOrFail();
+                if ((int) $current->gantt_revision !== $expectedRevision) {
+                    throw new GanttRevisionConflict((int) $current->gantt_revision);
+                }
+
                 $retainedIds = [];
                 foreach ($prepared as $index => $task) {
                     $taskId = (int) ($task['id'] ?? 0);
@@ -161,7 +172,11 @@ class ProjectGanttApiController extends Controller
                 }
 
                 GanttTask::query()->where('project_backlog_id', $backlog->id)->whereNotIn('id', $retainedIds)->delete();
+                $current->increment('gantt_revision');
             });
+            $backlog->refresh();
+        } catch (GanttRevisionConflict $conflict) {
+            return response()->json(['success' => false, 'conflict' => true, 'revision' => $conflict->currentRevision, 'message' => $conflict->getMessage()], 409);
         } catch (\Throwable $exception) {
             report($exception);
             return response()->json(['success' => false, 'message' => $exception instanceof \RuntimeException ? $exception->getMessage() : 'Não foi possível salvar o cronograma.'], 422);
@@ -296,6 +311,7 @@ class ProjectGanttApiController extends Controller
         }
 
         return [
+            'revision' => (int) $backlog->gantt_revision,
             'tasks' => $items,
             'selectedRow' => 0,
             'deletedTaskIds' => [],

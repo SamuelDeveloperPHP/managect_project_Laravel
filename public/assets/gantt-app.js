@@ -172,7 +172,10 @@
         throw new Error('O servidor respondeu de forma inesperada (código ' + response.status + '). Tente novamente em instantes.');
       }).then(function (data) {
         if (!response.ok || data.success === false) {
-          throw new Error(data.message || 'Nao foi possivel processar o cronograma.');
+          var failure = new Error(data.message || 'Nao foi possivel processar o cronograma.');
+          failure.status = response.status;
+          failure.conflict = data.conflict === true;
+          throw failure;
         }
         return data;
       });
@@ -197,6 +200,7 @@
           window.loadI18n();
         }
 
+        window.ganttRevision = data.project.revision;
         window.ge.loadProject(data.project);
         resetGanttScroll();
         window.ge.gantt.zoom = '1M';
@@ -255,12 +259,14 @@
     setStatus('Salvando cronograma...', 'info');
 
     var project = window.ge.saveProject();
+    project.revision = window.ganttRevision;
 
     projectRequest('/api/projects/' + document.body.getAttribute('data-project-id') + '/backlogs/' + document.body.getAttribute('data-backlog-id') + '/gantt', {
       method: 'POST',
       body: JSON.stringify(project)
     })
       .then(function (data) {
+        window.ganttRevision = data.project.revision;
         tuneLargeTimeline(data.project);
         window.ge.loadProject(data.project);
         resetGanttScroll();
@@ -271,11 +277,34 @@
       })
       .catch(function (error) {
         setStatus(error.message, 'error');
+        if (error.conflict) {
+          offerReloadAfterConflict(error.message);
+          return;
+        }
         notify('Erro', error.message, 'error');
       });
 
     return false;
   };
+
+  // Outra pessoa salvou o cronograma antes: nada é sobrescrito. A pessoa escolhe quando recarregar.
+  function offerReloadAfterConflict(message) {
+    if (!window.Swal) {
+      if (window.confirm(message + '\n\nRecarregar agora? (suas alterações não salvas serão perdidas)')) loadGantt();
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Cronograma alterado por outra pessoa',
+      text: message,
+      showCancelButton: true,
+      confirmButtonText: 'Recarregar agora',
+      cancelButtonText: 'Continuar editando'
+    }).then(function (result) {
+      if (result.isConfirmed) loadGantt();
+    });
+  }
 
   function tuneLargeTimeline(project) {
     if (!window.ge || !project || !Array.isArray(project.tasks)) {
