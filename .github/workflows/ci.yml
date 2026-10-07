@@ -18,9 +18,8 @@ permissions:
 
 env:
   # Sem .env no runner o Laravel assume "production", e a trava de segurança de produção (AppServiceProvider)
-  # recusa subir. O CI roda em ambiente de teste, com uma chave descartável (não é um segredo).
+  # recusa subir. O CI roda em ambiente de teste. A APP_KEY é gerada ao acaso em cada job (nenhuma chave fica no repositório).
   APP_ENV: testing
-  APP_KEY: base64:Y2ktZHVtbXkta2V5LW5vdC1hLXNlY3JldC0zMmJ5IXg=
   # Extensões que o sistema usa de verdade: sodium (criptografia do backup), zip (arquivos do backup), pdo_* e mbstring.
   PHP_EXTENSIONS: mbstring, intl, pdo_sqlite, pdo_mysql, zip, sodium, fileinfo, gd
 
@@ -31,6 +30,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -45,6 +46,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -69,6 +72,8 @@ jobs:
         php: ['8.2', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -102,6 +107,8 @@ jobs:
       DB_PASSWORD: ''
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -137,6 +144,8 @@ jobs:
       BACKUP_SMOKE_DB_TARGET: smoke_target
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -155,6 +164,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -175,6 +186,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Gera uma APP_KEY descartável (não fica no repositório)
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
