@@ -1,9 +1,11 @@
 name: CI
 
 on:
+  # O fluxo do projeto é branch -> merge na main: roda a cada push de qualquer branch (antes do merge).
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 # Uma execução nova cancela a anterior da mesma branch (economiza minutos).
