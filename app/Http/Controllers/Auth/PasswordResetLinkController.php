@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +38,12 @@ class PasswordResetLinkController extends Controller
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we
         // need to show to the user. Finally, we'll send out a proper response.
-        Password::sendResetLink($request->only('email'));
+        try {
+            Password::sendResetLink($request->only('email'));
+        } catch (\Throwable $exception) {
+            // Falha de SMTP não pode virar erro 500 nem revelar se a conta existe; fica registrada para a operação.
+            Log::error('Falha ao enviar o e-mail de recuperação de acesso: '.$exception->getMessage(), ['mailer' => config('mail.default')]);
+        }
 
         // The same response for existing, unknown, and throttled addresses prevents account enumeration.
         return back()->with('status', self::GENERIC_STATUS);
