@@ -14,7 +14,9 @@ class GanttTask extends Model
     protected static function booted(): void
     {
         static::saving(function (self $task): void {
-            if (! $task->project_id && ! $task->project_backlog_id) return;
+            if (! $task->project_id && ! $task->project_backlog_id) {
+                return;
+            }
             if (! $task->project_backlog_id) {
                 throw new \LogicException('Toda tarefa vinculada a um projeto deve pertencer a um backlog.');
             }

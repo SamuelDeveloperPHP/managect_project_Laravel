@@ -19,6 +19,7 @@ class ImportPhalconProjects extends Command
         $password = (string) $sourceConfig['password'];
         if ($password === '') {
             $this->error('Defina PHALCON_SOURCE_PASSWORD no ambiente antes de iniciar a importação.');
+
             return self::FAILURE;
         }
 
@@ -52,6 +53,7 @@ class ImportPhalconProjects extends Command
 
             if ($this->option('dry-run')) {
                 $this->info(sprintf('Validação concluída: %d projeto(s), %d tarefa(s), %d responsável(is), %d vínculo(s) de equipe.', count($projects), count($tasks), count($assignments), count($members)));
+
                 return self::SUCCESS;
             }
 
@@ -76,6 +78,7 @@ class ImportPhalconProjects extends Command
                     $existingTask = DB::table('gantt_tasks')->where('phalcon_id', $row['id'])->first();
                     if ($existingTask) {
                         $insertedTasks++;
+
                         continue;
                     }
                     $legacyTask = DB::table('gantt_tasks')->where('id', $row['id'])->first();
@@ -98,6 +101,7 @@ class ImportPhalconProjects extends Command
                         }
                         DB::table('gantt_tasks')->where('id', $legacyTask->id)->whereNull('phalcon_id')->update(['phalcon_id' => $row['id']]);
                         $insertedTasks++;
+
                         continue;
                     }
                     $insertedTasks += DB::table('gantt_tasks')->insertOrIgnore($taskData);
@@ -111,6 +115,7 @@ class ImportPhalconProjects extends Command
                     }
                     if (DB::table('gantt_task_assignments')->where('phalcon_id', $row['id'])->exists()) {
                         $insertedAssignments++;
+
                         continue;
                     }
                     $existingAssignment = DB::table('gantt_task_assignments')->where('gantt_task_id', $taskId)->where('user_id', $userId)->where('role', $row['role'])->first();
@@ -147,10 +152,12 @@ class ImportPhalconProjects extends Command
             }, 3);
 
             $this->info(sprintf('Importação concluída. Projetos vinculados: %d; tarefas vinculadas/importadas: %d; responsáveis vinculados/importados: %d; vínculos de equipe vinculados/importados: %d.', $insertedProjects, $insertedTasks, $insertedAssignments, $insertedMembers));
+
             return self::SUCCESS;
         } catch (\Throwable $exception) {
             report($exception);
             $this->error('Importação cancelada: não foi possível concluir a validação ou gravação. Consulte o log para detalhes técnicos.');
+
             return self::FAILURE;
         }
     }
@@ -177,6 +184,7 @@ class ImportPhalconProjects extends Command
             }
             $map[(int) $row['id']] = (int) $match->id;
         }
+
         return $map;
     }
 
@@ -200,6 +208,7 @@ class ImportPhalconProjects extends Command
                 $map[(int) $user['id']] = (int) $destination->id;
             }
         }
+
         return $map;
     }
 }

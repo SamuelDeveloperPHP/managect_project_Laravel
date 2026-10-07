@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? [
                     ...$user->only('id', 'name', 'email', 'role', 'permissions', 'email_verified_at'),
-                    'profile_photo_url' => $user->profile_photo_path ? '/storage/' . ltrim($user->profile_photo_path, '/') : null,
+                    'profile_photo_url' => $user->profile_photo_path ? '/storage/'.ltrim($user->profile_photo_path, '/') : null,
                 ] : null,
                 'company' => ($request->attributes->get('current_company') ?? $request->user()?->company)?->only('id', 'name'),
                 'selected_company_id' => $request->session()->get('master_company_id'),

@@ -12,9 +12,7 @@ use RuntimeException;
 class BackupSet
 {
     /** @param array<string, mixed> $manifest */
-    public function __construct(public readonly string $directory, public readonly string $stamp, public array $manifest = [])
-    {
-    }
+    public function __construct(public readonly string $directory, public readonly string $stamp, public array $manifest = []) {}
 
     public static function manifestPath(string $directory, string $stamp): string
     {

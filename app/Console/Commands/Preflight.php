@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -59,7 +60,7 @@ class Preflight extends Command
 
         $marker = rtrim((string) config('backup.path'), '/\\').DIRECTORY_SEPARATOR.'last-success.json';
         $last = is_file($marker) ? json_decode((string) File::get($marker), true) : null;
-        $finished = isset($last['finished_at']) ? \Carbon\Carbon::parse($last['finished_at']) : null;
+        $finished = isset($last['finished_at']) ? Carbon::parse($last['finished_at']) : null;
         $max = (int) config('backup.max_age_hours');
 
         $check(

@@ -37,13 +37,17 @@ class GanttTaskController extends Controller
     private function templates(): string
     {
         $html = @file_get_contents(resource_path('assets/gantt-templates.html'));
-        if (! is_string($html)) return '<div id="gantEditorTemplates" style="display:none"></div>';
+        if (! is_string($html)) {
+            return '<div id="gantEditorTemplates" style="display:none"></div>';
+        }
 
         $start = strpos($html, '<div id="gantEditorTemplates"');
         $script = $start === false ? false : strpos($html, '<script type="text/javascript">', $start);
         $beforeScript = $start === false || $script === false ? '' : substr($html, $start, $script - $start);
         $end = strrpos($beforeScript, '</div>');
-        if ($start === false || $script === false || $end === false) return '<div id="gantEditorTemplates" style="display:none"></div>';
+        if ($start === false || $script === false || $end === false) {
+            return '<div id="gantEditorTemplates" style="display:none"></div>';
+        }
 
         $templates = substr($beforeScript, 0, $end + strlen('</div>'));
         $translations = [
@@ -105,6 +109,7 @@ class GanttTaskController extends Controller
         ];
 
         $templates = str_replace('src="res/', 'src="/assets/jquery-gantt/res/', strtr($templates, $translations));
+
         return preg_replace("/\\s+on[a-z]+\\s*=\\s*(?:\"[^\"]*\"|'[^']*')/i", '', $templates) ?? $templates;
     }
 }

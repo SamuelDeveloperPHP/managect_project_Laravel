@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Support\Gantt\TaskInput;
 use Illuminate\Support\Facades\Validator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -56,7 +57,7 @@ class GanttTaskInputTest extends TestCase
     }
 
     /** @dataProvider variations */
-    #[\PHPUnit\Framework\Attributes\DataProvider('variations')]
+    #[DataProvider('variations')]
     public function test_lean_validation_matches_the_laravel_reference(string $field, mixed $value): void
     {
         $task = $this->base();

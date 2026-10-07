@@ -11,7 +11,6 @@ use App\Support\Backup\SqlRestorer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -36,6 +35,10 @@ class BackupAndMailReadinessTest extends TestCase
 
     public function test_dump_and_restore_round_trip_keeps_tricky_text_intact(): void
     {
+        // A restauração recria tabelas (DDL), o que em MySQL confirma a transação do teste e deixaria dados para trás.
+        // Em MySQL essa prova é feita de ponta a ponta pelo job "Backup e restauração (MySQL)" do CI.
+        $this->skipUnlessSqlite();
+
         $names = ["O'Brien & Filhos; DROP TABLE x;", "Linha 1\nLinha 2 -- não é comentário", 'Barra \\ invertida "aspas" ção 日本'];
         foreach ($names as $i => $name) {
             Company::factory()->create(['name' => $name, 'slug' => 'empresa-'.$i]);
@@ -43,13 +46,13 @@ class BackupAndMailReadinessTest extends TestCase
 
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
+        $stats = (new DatabaseDumper)->dump(DB::connection(), $file);
         $this->assertGreaterThan(0, $stats['tables']);
         $this->assertGreaterThanOrEqual(3, $stats['rows']);
 
         config(['database.connections.restore_target' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => false]]);
         $target = DB::connection('restore_target');
-        $this->assertGreaterThan(0, (new SqlRestorer())->restore($target, $file));
+        $this->assertGreaterThan(0, (new SqlRestorer)->restore($target, $file));
 
         $restored = $target->table('companies')->orderBy('id')->pluck('name')->all();
         $this->assertSame($names, $restored);
@@ -57,6 +60,13 @@ class BackupAndMailReadinessTest extends TestCase
             DB::table('companies')->count(),
             $target->table('companies')->count(),
         );
+    }
+
+    private function skipUnlessSqlite(): void
+    {
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Teste destrutivo: roda apenas em SQLite (em MySQL, ver o job de CI de backup).');
+        }
     }
 
     public function test_backup_command_writes_files_marker_and_prunes_old_sets(): void
@@ -82,7 +92,7 @@ class BackupAndMailReadinessTest extends TestCase
     {
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        (new DatabaseDumper())->dump(DB::connection(), $file);
+        (new DatabaseDumper)->dump(DB::connection(), $file);
 
         $this->artisan('backup:restore', ['file' => $file])->assertFailed();
     }
@@ -152,9 +162,9 @@ class BackupAndMailReadinessTest extends TestCase
         }
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
+        $stats = (new DatabaseDumper)->dump(DB::connection(), $file);
 
-        $analysis = (new SqlRestorer())->analyze($file, false);
+        $analysis = (new SqlRestorer)->analyze($file, DB::connection()->getDriverName() !== 'sqlite');
 
         $this->assertSame($stats['tables']['companies'], $analysis['companies']);
         $this->assertSame(3, $analysis['companies']);
@@ -166,7 +176,7 @@ class BackupAndMailReadinessTest extends TestCase
         $plain = $this->dir.'/plain.bin';
         File::put($plain, random_bytes(200_000)); // mais de um bloco de 64 KB
         $key = sodium_crypto_secretstream_xchacha20poly1305_keygen();
-        $crypto = new BackupCrypto();
+        $crypto = new BackupCrypto;
 
         $crypto->encryptFile($plain, $this->dir.'/c.enc', $key);
         $crypto->decryptFile($this->dir.'/c.enc', $this->dir.'/out.bin', $key);

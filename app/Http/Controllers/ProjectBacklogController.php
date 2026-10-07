@@ -129,9 +129,13 @@ class ProjectBacklogController extends Controller
             }
 
             $toDetach = $backlog->tasks()->where('project_backlog_item_id', $item->id);
-            if ($taskIds !== []) $toDetach->whereNotIn('id', $taskIds);
+            if ($taskIds !== []) {
+                $toDetach->whereNotIn('id', $taskIds);
+            }
             $toDetach->update(['project_backlog_item_id' => null, 'updated_by' => $request->user()->id]);
-            if ($taskIds !== []) $backlog->tasks()->whereIn('id', $taskIds)->update(['project_backlog_item_id' => $item->id, 'updated_by' => $request->user()->id]);
+            if ($taskIds !== []) {
+                $backlog->tasks()->whereIn('id', $taskIds)->update(['project_backlog_item_id' => $item->id, 'updated_by' => $request->user()->id]);
+            }
             // Quem estiver com o Gantt aberto precisa recarregar antes de salvar (os vínculos mudaram).
             $backlog->increment('gantt_revision');
 

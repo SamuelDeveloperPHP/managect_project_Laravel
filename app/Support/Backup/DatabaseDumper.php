@@ -20,7 +20,7 @@ class DatabaseDumper
 
     /**
      * @param  list<string>  $skipData  tabelas cujos dados não entram no dump
-     * @return array{tables: array<string, int>, rows: int, bytes: int}  linhas gravadas por tabela
+     * @return array{tables: array<string, int>, rows: int, bytes: int} linhas gravadas por tabela
      */
     public function dump(Connection $connection, string $gzPath, array $skipData = []): array
     {

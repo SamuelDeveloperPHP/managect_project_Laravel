@@ -76,7 +76,7 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $deletedUser = \App\Models\User::withTrashed()->find($user->id);
+        $deletedUser = User::withTrashed()->find($user->id);
         $this->assertNotNull($deletedUser);
         $this->assertNotNull($deletedUser->deleted_at);
     }

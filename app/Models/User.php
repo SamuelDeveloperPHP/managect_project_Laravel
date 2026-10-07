@@ -3,13 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use App\Models\Concerns\AuditsChanges;
+use Database\Factories\UserFactory;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -71,7 +72,7 @@ class User extends Authenticatable
      */
     public function routeNotificationForMail(mixed $notification = null): string|array
     {
-        $secondary = $this->role === 'admin' && $notification instanceof \Illuminate\Auth\Notifications\ResetPassword
+        $secondary = $this->role === 'admin' && $notification instanceof ResetPassword
             ? $this->company?->secondary_recovery_email
             : null;
 
@@ -114,6 +115,7 @@ class User extends Authenticatable
                 $user->email = self::PLATFORM_MASTER_EMAIL;
                 $user->company_id = self::PLATFORM_MASTER_COMPANY_ID;
                 $user->permissions = [];
+
                 return;
             }
 

@@ -5,6 +5,7 @@ namespace App\Support;
 final class TenantContext
 {
     private ?int $companyId = null;
+
     private bool $globalAccess = false;
 
     public function setCompanyId(int $companyId): void

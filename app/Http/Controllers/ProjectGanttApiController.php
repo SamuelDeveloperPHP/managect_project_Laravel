@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Exceptions\GanttRevisionConflict;
 use App\Models\GanttTask;
 use App\Models\Project;
-use App\Models\ProjectBacklogItem;
 use App\Models\ProjectBacklog;
+use App\Models\ProjectBacklogItem;
 use App\Models\User;
 use App\Support\Gantt\TaskInput;
 use Carbon\CarbonImmutable;
@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class ProjectGanttApiController extends Controller
 {
@@ -25,6 +24,7 @@ class ProjectGanttApiController extends Controller
     {
         $project = Project::query()->findOrFail($project);
         $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
+
         return response()->json(['success' => true, 'project' => $this->projectPayload($project, $backlog)]);
     }
 
@@ -109,7 +109,7 @@ class ProjectGanttApiController extends Controller
                         throw new \RuntimeException('Uma tarefa enviada não pertence a este cronograma.');
                     }
 
-                    $record = $taskId > 0 ? $existing->get($taskId) : new GanttTask();
+                    $record = $taskId > 0 ? $existing->get($taskId) : new GanttTask;
                     $attributes = [
                         'project_id' => $project->id,
                         'project_backlog_id' => $backlog->id,
@@ -137,6 +137,7 @@ class ProjectGanttApiController extends Controller
                     if ($taskId > 0 && $this->isUnchanged($record, $attributes)) {
                         $retainedIds[] = $record->id;
                         $this->syncAssignments($record, $task['assigs'] ?? [], $companyId, false);
+
                         continue;
                     }
 
@@ -164,6 +165,7 @@ class ProjectGanttApiController extends Controller
             return response()->json(['success' => false, 'conflict' => true, 'revision' => $conflict->currentRevision, 'message' => $conflict->getMessage()], 409);
         } catch (\Throwable $exception) {
             report($exception);
+
             return response()->json(['success' => false, 'message' => $exception instanceof \RuntimeException ? $exception->getMessage() : 'Não foi possível salvar o cronograma.'], 422);
         }
 
@@ -180,7 +182,9 @@ class ProjectGanttApiController extends Controller
         foreach ($tasks as $index => $task) {
             $start = CarbonImmutable::createFromTimestampMs((int) $task['start'])->setTimezone(config('app.timezone'));
             $end = CarbonImmutable::createFromTimestampMs((int) $task['end'])->setTimezone(config('app.timezone'));
-            if ($end->lt($start)) throw new \RuntimeException('A data final não pode ser anterior à data inicial.');
+            if ($end->lt($start)) {
+                throw new \RuntimeException('A data final não pode ser anterior à data inicial.');
+            }
 
             $depends = trim((string) ($task['depends'] ?? ''));
             foreach (array_filter(explode(',', $depends)) as $dependency) {
@@ -261,6 +265,7 @@ class ProjectGanttApiController extends Controller
                 if ($current !== $wanted) {
                     return false;
                 }
+
                 continue;
             }
             if ((string) $current !== (string) $wanted) {
