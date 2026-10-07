@@ -22,6 +22,8 @@ const env = {
     QUEUE_CONNECTION: 'sync',
     MAIL_MAILER: 'log',
     TWO_FACTOR_REQUIRED: 'false',
+    PRIVACY_TERMS_REQUIRED: 'true',
+    PRIVACY_CONTACT_EMAIL: 'privacidade@example.test',
     PHP_CLI_SERVER_WORKERS: '4',
 };
 

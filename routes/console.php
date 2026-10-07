@@ -19,3 +19,8 @@ Schedule::command('backup:run')
 Schedule::command('backup:verify')
     ->weeklyOn(0, '03:30')
     ->appendOutputTo(storage_path('logs/backup.log'));
+
+// LGPD: IP e navegador saem dos registros antigos e os vencidos são apagados (prazos em config/privacy.php).
+Schedule::command('privacy:prune')
+    ->dailyAt('03:10')
+    ->appendOutputTo(storage_path('logs/privacy.log'));

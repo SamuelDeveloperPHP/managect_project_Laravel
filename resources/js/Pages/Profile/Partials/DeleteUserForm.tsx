@@ -53,16 +53,16 @@ export default function DeleteUserForm({
         <section className={`space-y-6 ${className}`}>
             <header>
                 <h2 className="font-display text-lg font-extrabold tracking-tight text-neutral-950">
-                    Excluir conta
+                    Excluir conta e apagar meus dados
                 </h2>
 
                 <p className="mt-1 text-sm text-neutral-600">
-                    Ao excluir sua conta, todos os seus recursos e dados serão removidos permanentemente. Antes de continuar, baixe as informações que deseja guardar.
+                    Seu nome, e-mail, CPF, foto e acessos serão apagados de forma irreversível. O histórico dos projetos de que você participou continua, sem identificar você. Antes de continuar, baixe seus dados em &ldquo;Privacidade e seus dados&rdquo;.
                 </p>
             </header>
 
             <DangerButton onClick={confirmUserDeletion}>
-                Excluir conta
+                Excluir conta e apagar meus dados
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
@@ -72,7 +72,7 @@ export default function DeleteUserForm({
                     </h2>
 
                     <p className="mt-1 text-sm text-neutral-600">
-                        Todos os seus recursos e dados serão removidos permanentemente. Digite sua senha para confirmar a exclusão da conta.
+                        Seus dados pessoais serão apagados permanentemente e não há como desfazer. Digite sua senha para confirmar.
                     </p>
 
                     <div className="mt-6">

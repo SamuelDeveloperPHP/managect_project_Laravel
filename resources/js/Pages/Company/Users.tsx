@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import ErasePersonData from './Partials/ErasePersonData';
 import { btnPrimary, btnSecondary, fieldClass, PageHeader, panelClass } from '@/Components/ui';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -73,6 +74,8 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
                     {user.role !== 'master' && <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={`${smallBtn} border-neutral-300 text-neutral-800 hover:bg-neutral-50`}>{open ? 'Fechar' : 'Editar'}</button>}
                     {user.role === 'user' && user.is_active && <button type="button" onClick={() => { if (confirm(`Transferir a administração da empresa para ${user.name}? O administrador atual passará a ser um usuário comum.`)) router.post(route('company.users.transfer-admin', user.id), {}, { preserveScroll: true }); }} className={`${smallBtn} border-brand-300 text-brand-700 hover:bg-brand-50`}>Transferir administração</button>}
                     {user.two_factor_confirmed_at && !ownAccount && user.role !== 'master' && <button type="button" onClick={() => { if (confirm(`Redefinir a verificação em duas etapas de ${user.name}? A pessoa precisará ativar de novo no próximo acesso.`)) router.post(route('company.users.two-factor.reset', user.id), {}, { preserveScroll: true }); }} className={`${smallBtn} border-neutral-300 text-neutral-700 hover:bg-neutral-50`}>Redefinir 2FA</button>}
+                    {!ownAccount && user.role !== 'master' && <a href={route('company.users.data-export', user.id)} download className={`${smallBtn} border-neutral-300 text-neutral-700 hover:bg-neutral-50`}>Exportar dados</a>}
+                    {!ownAccount && user.role === 'user' && <ErasePersonData userId={user.id} name={user.name} className={`${smallBtn} border-rose-300 text-rose-700 hover:bg-rose-50`} />}
                     {!ownAccount && user.role !== 'master' && <button type="button" onClick={() => status.patch(route('company.users.status', user.id), { preserveScroll: true })} disabled={status.processing} className={`${smallBtn} ${user.is_active ? 'border-neutral-300 text-neutral-700 hover:bg-neutral-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'}`}>{user.is_active ? 'Desativar' : 'Ativar'}</button>}
                 </div>
             </div>
