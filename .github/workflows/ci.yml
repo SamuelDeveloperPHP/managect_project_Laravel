@@ -17,6 +17,10 @@ permissions:
   contents: read
 
 env:
+  # Sem .env no runner o Laravel assume "production", e a trava de segurança de produção (AppServiceProvider)
+  # recusa subir. O CI roda em ambiente de teste, com uma chave descartável (não é um segredo).
+  APP_ENV: testing
+  APP_KEY: base64:Y2ktZHVtbXkta2V5LW5vdC1hLXNlY3JldC0zMmJ5IXg=
   # Extensões que o sistema usa de verdade: sodium (criptografia do backup), zip (arquivos do backup), pdo_* e mbstring.
   PHP_EXTENSIONS: mbstring, intl, pdo_sqlite, pdo_mysql, zip, sodium, fileinfo, gd
 
