@@ -41,7 +41,27 @@ class ProjectController extends Controller
                 'id', 'name', 'code', 'description', 'status', 'client', 'priority', 'start_date', 'deadline', 'image_path', 'created_at',
             ])->map(fn (Project $project): array => $this->projectCard($project)),
             'canManageProjects' => $request->user()->hasPermission('can_manage_projects'),
+            'manageableProjectIds' => $this->manageableProjectIds($request->user()),
         ]);
+    }
+
+    /** @return list<int> ids dos projetos que a pessoa pode alterar (para mostrar ou esconder "Editar"). */
+    private function manageableProjectIds(User $user): array
+    {
+        $ids = Project::query()->pluck('id');
+        if ($user->hasRole('master', 'admin')) {
+            return $ids->map(fn ($id): int => (int) $id)->all();
+        }
+        if (! $user->hasPermission('can_manage_projects')) {
+            return [];
+        }
+
+        $mine = Project::query()
+            ->where(fn ($query) => $query->where('leader_id', $user->id)->orWhere('created_by', $user->id)
+                ->orWhereIn('id', fn ($sub) => $sub->select('project_id')->from('project_members')->where('user_id', $user->id)))
+            ->pluck('id');
+
+        return $mine->map(fn ($id): int => (int) $id)->all();
     }
 
     public function create(Request $request): Response|RedirectResponse
@@ -89,6 +109,7 @@ class ProjectController extends Controller
 
     public function edit(Project $project): Response
     {
+        $this->authorizeProjectManagement($project);
         $project->load(['members:id', 'attachments:id,project_id,original_name,size_bytes']);
         $project->loadCount(['backlogs', 'tasks']);
 
@@ -113,6 +134,7 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project): RedirectResponse
     {
+        $this->authorizeProjectManagement($project);
         $data = $this->validatedProject($request, $project);
         $memberIds = $this->memberIds($data);
         unset($data['member_ids'], $data['image'], $data['attachments']);
@@ -139,6 +161,8 @@ class ProjectController extends Controller
 
     public function destroy(Project $project): RedirectResponse
     {
+        $this->authorizeProjectManagement($project);
+
         if ($project->backlogs()->exists() || $project->tasks()->exists()) {
             throw ValidationException::withMessages(['project' => 'Este projeto possui backlogs ou tarefas. Remova ou reorganize esses dados antes de excluir o projeto.']);
         }
@@ -160,6 +184,7 @@ class ProjectController extends Controller
 
     public function destroyAttachment(Project $project, ProjectAttachment $attachment): RedirectResponse
     {
+        $this->authorizeProjectManagement($project);
         abort_unless($attachment->project_id === $project->id, 404);
         Storage::disk('local')->delete($attachment->stored_path);
         $attachment->delete();

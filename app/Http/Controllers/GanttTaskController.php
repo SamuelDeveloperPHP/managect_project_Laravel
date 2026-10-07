@@ -17,7 +17,7 @@ class GanttTaskController extends Controller
         return Inertia::render('Projects/Timeline', [
             'project' => $project->only('id', 'name', 'code', 'status', 'start_date', 'deadline'),
             'backlog' => $backlog->only('id', 'name', 'code'),
-            'canManage' => request()->user()->hasPermission('can_manage_projects'),
+            'canManage' => $project->canBeManagedBy(request()->user()),
             'ganttTemplates' => $this->templates(),
             'assetVersion' => $this->assetVersion(),
         ]);

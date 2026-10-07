@@ -16,7 +16,7 @@ const formatDate = (value: string) => {
     return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleDateString('pt-BR');
 };
 
-export default function Index({ projects, canManageProjects }: { projects: Project[]; canManageProjects: boolean }) {
+export default function Index({ projects, canManageProjects, manageableProjectIds = [] }: { projects: Project[]; canManageProjects: boolean; manageableProjectIds?: number[] }) {
     const newProject = canManageProjects ? <Link href={route('projects.create')} className={btnPrimary}>Novo projeto</Link> : null;
 
     return (
@@ -52,7 +52,7 @@ export default function Index({ projects, canManageProjects }: { projects: Proje
                                     <Link href={route('projects.overview', project.id)} className="whitespace-nowrap rounded text-brand-700 transition hover:text-brand-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">Visão geral →</Link>
                                     <span className="flex gap-4">
                                         <Link href={route('projects.backlog.index', project.id)} className="rounded text-neutral-600 transition hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">Backlogs</Link>
-                                        {canManageProjects && <Link href={route('projects.edit', project.id)} className="rounded text-neutral-600 transition hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">Editar</Link>}
+                                        {canManageProjects && manageableProjectIds.includes(project.id) && <Link href={route('projects.edit', project.id)} className="rounded text-neutral-600 transition hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">Editar</Link>}
                                     </span>
                                 </div>
                             </li>
