@@ -166,3 +166,35 @@ jobs:
         run: npm run build
       - name: Confere que o build gerou os arquivos
         run: test -f public/build/manifest.json
+
+  e2e-gantt:
+    # Abre o Gantt num Chrome de verdade: cria, edita, põe predecessora, exclui, simula conflito entre duas pessoas
+    # e confere a regra de acesso por projeto. Banco SQLite descartável, criado pelo próprio teste.
+    name: Interface do Gantt (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+      - run: composer install --prefer-dist --no-progress --no-interaction
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      # O runner do GitHub já traz o Google Chrome; o teste usa esse navegador (nada para baixar).
+      - run: npx playwright test
+      - name: Guarda relatório e capturas quando falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-falha
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
