@@ -3,13 +3,15 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
+import TwoFactorForm from './Partials/TwoFactorForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    twoFactor,
+}: PageProps<{ mustVerifyEmail: boolean; status?: string; twoFactor: { enabled: boolean; required: boolean; recovery_codes_left: number; setup: { qr_svg: string; secret: string } | null } }>) {
     return (
         <AuthenticatedLayout
             header={<PageHeader title="Perfil" meta="Seus dados de acesso e segurança" />}
@@ -24,6 +26,10 @@ export default function Edit({
                             status={status}
                             className="max-w-xl"
                         />
+                    </div>
+
+                    <div className={`${panelClass} p-6 sm:p-8`}>
+                        <TwoFactorForm twoFactor={twoFactor} />
                     </div>
 
                     <div className={`${panelClass} p-6 sm:p-8`}>
