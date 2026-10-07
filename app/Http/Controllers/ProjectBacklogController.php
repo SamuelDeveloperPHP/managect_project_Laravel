@@ -132,6 +132,8 @@ class ProjectBacklogController extends Controller
             if ($taskIds !== []) $toDetach->whereNotIn('id', $taskIds);
             $toDetach->update(['project_backlog_item_id' => null, 'updated_by' => $request->user()->id]);
             if ($taskIds !== []) $backlog->tasks()->whereIn('id', $taskIds)->update(['project_backlog_item_id' => $item->id, 'updated_by' => $request->user()->id]);
+            // Quem estiver com o Gantt aberto precisa recarregar antes de salvar (os vínculos mudaram).
+            $backlog->increment('gantt_revision');
 
             AuditLog::query()->create([
                 'user_id' => $request->user()->id, 'company_id' => $project->company_id,
