@@ -1,6 +1,7 @@
 // Sobe um Trilha+ descartável para os testes de interface: banco SQLite próprio, recriado a cada execução.
 // Não depende do .env local (as variáveis abaixo têm precedência), então roda igual na CI.
 import { spawn, spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +14,8 @@ const env = {
     ...process.env,
     APP_ENV: 'local',
     APP_DEBUG: 'false',
-    APP_KEY: 'base64:Y2ktZHVtbXkta2V5LW5vdC1hLXNlY3JldC0zMmJ5IXg=',
+    // Chave descartável, nova a cada execução: nenhum valor fixo no repositório.
+    APP_KEY: `base64:${randomBytes(32).toString('base64')}`,
     APP_URL: `http://127.0.0.1:${port}`,
     DB_CONNECTION: 'sqlite',
     DB_DATABASE: database,
