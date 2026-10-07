@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\GanttTask;
 use App\Models\Project;
 use App\Models\ProjectBacklog;
+use App\Models\ProjectBacklogItem;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,7 +141,7 @@ class GanttCrudTest extends TestCase
         $this->save($admin, $project, $backlog, [$this->task()], 0)->assertOk();
         $taskId = GanttTask::withoutGlobalScopes()->first()->id;
         app(TenantContext::class)->setCompanyId($admin->company_id);
-        $item = \App\Models\ProjectBacklogItem::create([
+        $item = ProjectBacklogItem::create([
             'company_id' => $admin->company_id, 'project_id' => $project->id, 'project_backlog_id' => $backlog->id,
             'code' => 'BL-1-01', 'epic' => 'E', 'title' => 'Item', 'priority' => 'P1', 'status' => 'pending',
         ]);

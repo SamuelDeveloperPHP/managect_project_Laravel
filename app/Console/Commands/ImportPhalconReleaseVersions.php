@@ -19,6 +19,7 @@ class ImportPhalconReleaseVersions extends Command
         $password = (string) $sourceConfig['password'];
         if ($password === '') {
             $this->error('Defina PHALCON_SOURCE_PASSWORD no ambiente antes de iniciar a importação.');
+
             return self::FAILURE;
         }
 
@@ -32,6 +33,7 @@ class ImportPhalconReleaseVersions extends Command
 
             if ($this->option('dry-run')) {
                 $this->info(sprintf('Validação concluída: %d versão(ões) prontas para importação.', count($records)));
+
                 return self::SUCCESS;
             }
 
@@ -42,10 +44,12 @@ class ImportPhalconReleaseVersions extends Command
             }
 
             $this->info(sprintf('Importação concluída: %d versão(ões) processadas.', count($records)));
+
             return self::SUCCESS;
         } catch (Throwable $exception) {
             report($exception);
             $this->error('Importação cancelada. Consulte o log para detalhes técnicos.');
+
             return self::FAILURE;
         }
     }

@@ -11,7 +11,6 @@ use App\Support\Backup\SqlRestorer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -47,13 +46,13 @@ class BackupAndMailReadinessTest extends TestCase
 
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
+        $stats = (new DatabaseDumper)->dump(DB::connection(), $file);
         $this->assertGreaterThan(0, $stats['tables']);
         $this->assertGreaterThanOrEqual(3, $stats['rows']);
 
         config(['database.connections.restore_target' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => false]]);
         $target = DB::connection('restore_target');
-        $this->assertGreaterThan(0, (new SqlRestorer())->restore($target, $file));
+        $this->assertGreaterThan(0, (new SqlRestorer)->restore($target, $file));
 
         $restored = $target->table('companies')->orderBy('id')->pluck('name')->all();
         $this->assertSame($names, $restored);
@@ -93,7 +92,7 @@ class BackupAndMailReadinessTest extends TestCase
     {
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        (new DatabaseDumper())->dump(DB::connection(), $file);
+        (new DatabaseDumper)->dump(DB::connection(), $file);
 
         $this->artisan('backup:restore', ['file' => $file])->assertFailed();
     }
@@ -163,9 +162,9 @@ class BackupAndMailReadinessTest extends TestCase
         }
         File::ensureDirectoryExists($this->dir);
         $file = $this->dir.'/db-test.sql.gz';
-        $stats = (new DatabaseDumper())->dump(DB::connection(), $file);
+        $stats = (new DatabaseDumper)->dump(DB::connection(), $file);
 
-        $analysis = (new SqlRestorer())->analyze($file, DB::connection()->getDriverName() !== 'sqlite');
+        $analysis = (new SqlRestorer)->analyze($file, DB::connection()->getDriverName() !== 'sqlite');
 
         $this->assertSame($stats['tables']['companies'], $analysis['companies']);
         $this->assertSame(3, $analysis['companies']);
@@ -177,7 +176,7 @@ class BackupAndMailReadinessTest extends TestCase
         $plain = $this->dir.'/plain.bin';
         File::put($plain, random_bytes(200_000)); // mais de um bloco de 64 KB
         $key = sodium_crypto_secretstream_xchacha20poly1305_keygen();
-        $crypto = new BackupCrypto();
+        $crypto = new BackupCrypto;
 
         $crypto->encryptFile($plain, $this->dir.'/c.enc', $key);
         $crypto->decryptFile($this->dir.'/c.enc', $this->dir.'/out.bin', $key);

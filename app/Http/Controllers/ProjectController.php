@@ -13,12 +13,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use RuntimeException;
-use Throwable;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Throwable;
 
 class ProjectController extends Controller
 {
@@ -75,6 +75,7 @@ class ProjectController extends Controller
                 $project->members()->sync($memberIds);
                 $project->forceFill(['leader_id' => $data['leader_id'] ?? null])->save();
                 $this->storeFiles($request, $project, $fileChanges);
+
                 return $project;
             });
         } catch (Throwable $exception) {
@@ -143,6 +144,7 @@ class ProjectController extends Controller
         }
 
         $project->delete();
+
         return redirect()->route('projects.index')->with('success', 'Projeto excluído.');
     }
 
@@ -150,6 +152,7 @@ class ProjectController extends Controller
     {
         abort_unless($attachment->project_id === $project->id, 404);
         abort_unless(Storage::disk('local')->exists($attachment->stored_path), 404);
+
         return Storage::disk('local')->download($attachment->stored_path, $attachment->original_name, [
             'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store',
         ]);
@@ -160,6 +163,7 @@ class ProjectController extends Controller
         abort_unless($attachment->project_id === $project->id, 404);
         Storage::disk('local')->delete($attachment->stored_path);
         $attachment->delete();
+
         return back()->with('success', 'Anexo removido.');
     }
 
@@ -202,6 +206,7 @@ class ProjectController extends Controller
         if (! empty($data['leader_id'])) {
             $ids[] = (int) $data['leader_id'];
         }
+
         return array_values(array_unique($ids));
     }
 
@@ -272,6 +277,7 @@ class ProjectController extends Controller
             $tail = '-'.$suffix++;
             $candidate = Str::limit($base, 40 - strlen($tail), '').$tail;
         }
+
         return $candidate;
     }
 
@@ -283,11 +289,15 @@ class ProjectController extends Controller
             $oldPath = $project->image_path;
             $project->forceFill(['image_path' => $path])->save();
             $changes['added'][] = ['disk' => 'public', 'path' => $path];
-            if ($oldPath) $changes['removed'][] = ['disk' => 'public', 'path' => $oldPath];
+            if ($oldPath) {
+                $changes['removed'][] = ['disk' => 'public', 'path' => $oldPath];
+            }
         }
 
         foreach ($request->file('attachments', []) as $file) {
-            if (! $file instanceof UploadedFile) continue;
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
             $extension = strtolower($file->getClientOriginalExtension());
             $path = $file->storeAs('project-attachments/'.$project->company_id.'/'.$project->id, Str::uuid().'.'.$extension, 'local');
             abort_if(! $path, 500, 'Não foi possível armazenar um anexo do projeto.');
@@ -303,12 +313,16 @@ class ProjectController extends Controller
 
     private function discardNewFiles(array $files): void
     {
-        foreach ($files as $file) Storage::disk($file['disk'])->delete($file['path']);
+        foreach ($files as $file) {
+            Storage::disk($file['disk'])->delete($file['path']);
+        }
     }
 
     private function deleteReplacedFiles(array $files): void
     {
-        foreach ($files as $file) Storage::disk($file['disk'])->delete($file['path']);
+        foreach ($files as $file) {
+            Storage::disk($file['disk'])->delete($file['path']);
+        }
     }
 
     private function projectCard(Project $project): array

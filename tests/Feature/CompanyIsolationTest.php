@@ -58,20 +58,18 @@ class CompanyIsolationTest extends TestCase
         $this->assertDatabaseHas('project_backlogs', ['project_id' => $project->id, 'code' => 'BL-NOVO']);
     }
 
-
     public function test_project_edit_page_resolves_within_the_users_company_and_for_master(): void
     {
         [$companyA, $userA, $projectA] = $this->companyWithProject('empresa-a', 'Empresa A');
         [, , $projectB] = $this->companyWithProject('empresa-b', 'Empresa B');
 
-        $this->actingAs($userA)->get(route("projects.edit", $projectA))->assertOk();
+        $this->actingAs($userA)->get(route('projects.edit', $projectA))->assertOk();
         $this->actingAs($userA)->get(route('projects.edit', $projectB))->assertNotFound();
 
         Company::query()->find(2) ?? Company::factory()->create(['id' => 2]);
         $master = User::factory()->create(['company_id' => 2, 'email' => User::PLATFORM_MASTER_EMAIL, 'role' => 'master']);
         $this->actingAs($master)->get(route('projects.edit', $projectB))->assertOk();
     }
-
 
     public function test_backlog_code_is_generated_when_omitted_and_stays_unique(): void
     {

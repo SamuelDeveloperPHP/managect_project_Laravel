@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\TenantContext;
 use App\Models\Company;
+use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

@@ -10,7 +10,9 @@ return new class extends Migration
     {
         // The baseline migration can inherit this shared release table from the
         // Phalcon schema, so keep existing release history intact.
-        if (Schema::hasTable('release_versions')) return;
+        if (Schema::hasTable('release_versions')) {
+            return;
+        }
 
         Schema::create('release_versions', function (Blueprint $table): void {
             $table->id();

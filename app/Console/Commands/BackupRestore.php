@@ -49,7 +49,7 @@ class BackupRestore extends Command
                     return self::FAILURE;
                 }
                 $temporary = $file.'.restore.tmp.gz';
-                (new BackupCrypto())->decryptFile($file, $temporary, $key);
+                (new BackupCrypto)->decryptFile($file, $temporary, $key);
                 $path = $temporary;
             }
 

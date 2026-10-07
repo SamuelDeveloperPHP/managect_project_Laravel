@@ -20,9 +20,9 @@ return new class extends Migration
             DB::table('users')
                 ->whereRaw('LOWER(email) = ?', [User::PLATFORM_MASTER_EMAIL])
                 ->update([
-                'role' => 'master',
-                'company_id' => User::PLATFORM_MASTER_COMPANY_ID,
-            ]);
+                    'role' => 'master',
+                    'company_id' => User::PLATFORM_MASTER_COMPANY_ID,
+                ]);
         }
     }
 

@@ -86,6 +86,7 @@ class RegistrationTest extends TestCase
 
         $this->get('/register')->assertOk();
     }
+
     public function test_registration_accepts_a_cpf_as_the_company_document(): void
     {
         $this->post('/register', [

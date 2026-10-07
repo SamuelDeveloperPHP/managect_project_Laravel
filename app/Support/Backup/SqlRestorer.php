@@ -89,6 +89,7 @@ class SqlRestorer
                         } elseif ($char === "'") {
                             $inQuote = false;
                         }
+
                         continue;
                     }
 
@@ -143,6 +144,7 @@ class SqlRestorer
                 } elseif ($char === "'") {
                     $inQuote = false;
                 }
+
                 continue;
             }
 

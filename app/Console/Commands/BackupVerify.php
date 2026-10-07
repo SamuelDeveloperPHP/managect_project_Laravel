@@ -65,7 +65,7 @@ class BackupVerify extends Command
                     return ['O backup é criptografado e BACKUP_ENCRYPTION_KEY não está configurada neste ambiente.'];
                 }
                 $temporary = $path.'.verify.tmp.gz';
-                (new BackupCrypto())->decryptFile($path, $temporary, $key);
+                (new BackupCrypto)->decryptFile($path, $temporary, $key);
                 $path = $temporary;
             }
 

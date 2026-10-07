@@ -1,15 +1,15 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CompanyAccessController;
 use App\Http\Controllers\CompanySettingsController;
-use App\Http\Controllers\MasterCompaniesController;
-use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\GanttTaskController;
+use App\Http\Controllers\MasterCompaniesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectBacklogController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectGanttApiController;
 use App\Http\Controllers\ProjectOverviewController;
-use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReleaseVersionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;

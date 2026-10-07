@@ -151,7 +151,7 @@ class BackupRun extends Command
             return null;
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('Não foi possível criar o .zip dos arquivos.');
         }
@@ -208,7 +208,7 @@ class BackupRun extends Command
 
         try {
             Mail::raw(
-                "O backup automático do Trilha+ (".config('app.url').") falhou em ".now()->format('d/m/Y H:i').".\n\nMotivo: {$reason}\n\nO último backup bom continua guardado. Rode php artisan backup:run para tentar de novo.",
+                'O backup automático do Trilha+ ('.config('app.url').') falhou em '.now()->format('d/m/Y H:i').".\n\nMotivo: {$reason}\n\nO último backup bom continua guardado. Rode php artisan backup:run para tentar de novo.",
                 fn ($message) => $message->to($to)->subject('Trilha+ · FALHA no backup'),
             );
         } catch (\Throwable $exception) {

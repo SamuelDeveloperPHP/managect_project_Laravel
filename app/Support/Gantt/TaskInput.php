@@ -67,17 +67,29 @@ class TaskInput
     }
 
     private const M_ID = 'Identificador de tarefa inválido.';
+
     private const M_LEVEL = 'O nível da tarefa é inválido.';
+
     private const M_PROGRESS = 'O progresso deve ser um número inteiro entre 0 e 100.';
+
     private const M_START = 'A data inicial de uma tarefa é inválida.';
+
     private const M_END = 'A data final de uma tarefa é inválida.';
+
     private const M_DURATION = 'A duração deve ser de 1 a 3650 dias.';
+
     private const M_NAME = 'O nome da tarefa pode ter no máximo 190 caracteres.';
+
     private const M_CODE = 'O código da tarefa pode ter no máximo 80 caracteres.';
+
     private const M_ASSIG = 'Um responsável da tarefa é inválido.';
+
     private const M_STATUS = 'O status da tarefa é inválido.';
+
     private const M_DEPENDS = 'A lista de predecessoras é inválida.';
+
     private const M_ITEM = 'O vínculo com o item do backlog é inválido.';
+
     private const M_GENERIC = 'Os dados do cronograma são inválidos.';
 
     /**

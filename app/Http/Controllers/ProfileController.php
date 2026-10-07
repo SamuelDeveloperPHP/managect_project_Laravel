@@ -56,7 +56,9 @@ class ProfileController extends Controller
         try {
             $user->save();
         } catch (\Throwable $exception) {
-            if ($newPhoto) Storage::disk('public')->delete($newPhoto);
+            if ($newPhoto) {
+                Storage::disk('public')->delete($newPhoto);
+            }
             throw $exception;
         }
 

@@ -7,10 +7,10 @@ use App\Support\BrazilianTaxDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Str;
 
 class MasterCompaniesController extends Controller
 {
@@ -139,6 +139,7 @@ class MasterCompaniesController extends Controller
 
         if (empty($data['company_id'])) {
             $request->session()->forget('master_company_id');
+
             return redirect()->route('dashboard')->with('success', 'Visão global ativada.');
         }
 
