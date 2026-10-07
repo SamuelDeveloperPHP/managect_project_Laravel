@@ -15,6 +15,7 @@ type ManagedUser = {
     permissions: Record<string, boolean> | null;
     is_active: boolean;
     last_login_at: string | null;
+    two_factor_confirmed_at: string | null;
 };
 
 const permissionLabels: Record<string, string> = {
@@ -62,6 +63,7 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
                         <span className="truncate">{user.name}</span>
                         {ownAccount && <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">Você</span>}
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${roleTone[user.role]}`}>{roleLabels[user.role]}</span>
+                        {user.two_factor_confirmed_at && <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">2FA</span>}
                         {!user.is_active && <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Inativo</span>}
                     </p>
                     <p className="truncate text-sm text-neutral-500">{user.email}</p>
@@ -70,6 +72,7 @@ function UserRow({ user, currentUserId }: { user: ManagedUser; currentUserId: nu
                 <div className="flex flex-wrap items-center gap-2">
                     {user.role !== 'master' && <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={`${smallBtn} border-neutral-300 text-neutral-800 hover:bg-neutral-50`}>{open ? 'Fechar' : 'Editar'}</button>}
                     {user.role === 'user' && user.is_active && <button type="button" onClick={() => { if (confirm(`Transferir a administração da empresa para ${user.name}? O administrador atual passará a ser um usuário comum.`)) router.post(route('company.users.transfer-admin', user.id), {}, { preserveScroll: true }); }} className={`${smallBtn} border-brand-300 text-brand-700 hover:bg-brand-50`}>Transferir administração</button>}
+                    {user.two_factor_confirmed_at && !ownAccount && user.role !== 'master' && <button type="button" onClick={() => { if (confirm(`Redefinir a verificação em duas etapas de ${user.name}? A pessoa precisará ativar de novo no próximo acesso.`)) router.post(route('company.users.two-factor.reset', user.id), {}, { preserveScroll: true }); }} className={`${smallBtn} border-neutral-300 text-neutral-700 hover:bg-neutral-50`}>Redefinir 2FA</button>}
                     {!ownAccount && user.role !== 'master' && <button type="button" onClick={() => status.patch(route('company.users.status', user.id), { preserveScroll: true })} disabled={status.processing} className={`${smallBtn} ${user.is_active ? 'border-neutral-300 text-neutral-700 hover:bg-neutral-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'}`}>{user.is_active ? 'Desativar' : 'Ativar'}</button>}
                 </div>
             </div>

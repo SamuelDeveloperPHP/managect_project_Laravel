@@ -11,6 +11,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectGanttApiController;
 use App\Http\Controllers\ProjectOverviewController;
 use App\Http\Controllers\ReleaseVersionController;
+use App\Http\Controllers\TwoFactorManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,6 +29,14 @@ Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(func
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->middleware('throttle:sensitive-account-action')
         ->name('profile.destroy');
+
+    Route::prefix('/user/two-factor')->name('two-factor.')->middleware('throttle:sensitive-account-action')->group(function () {
+        Route::post('/', [TwoFactorManagementController::class, 'start'])->name('start');
+        Route::post('/confirm', [TwoFactorManagementController::class, 'confirm'])->name('confirm');
+        Route::delete('/pending', [TwoFactorManagementController::class, 'cancel'])->name('cancel');
+        Route::post('/recovery-codes', [TwoFactorManagementController::class, 'regenerateRecoveryCodes'])->name('recovery-codes');
+        Route::delete('/', [TwoFactorManagementController::class, 'disable'])->name('disable');
+    });
 });
 
 Route::prefix('master')->name('master.')->middleware(['auth', 'company', 'role:master', 'throttle:authenticated-web'])->group(function () {
@@ -71,6 +80,7 @@ Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role
     Route::get('/users', [CompanyAccessController::class, 'users'])->name('users.index');
     Route::post('/users', [CompanyAccessController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [CompanyAccessController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/two-factor/reset', [CompanyAccessController::class, 'resetTwoFactor'])->middleware('throttle:sensitive-account-action')->name('users.two-factor.reset');
     Route::post('/users/{user}/transfer-admin', [CompanyAccessController::class, 'transferAdmin'])->middleware('throttle:sensitive-account-action')->name('users.transfer-admin');
     Route::patch('/users/{user}/status', [CompanyAccessController::class, 'setActive'])->name('users.status');
     Route::get('/audit', [CompanyAccessController::class, 'audit'])->name('audit.index');

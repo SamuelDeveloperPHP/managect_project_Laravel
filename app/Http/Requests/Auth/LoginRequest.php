@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,20 +41,27 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Confere as credenciais. Retorna true se a pessoa entrou; false se falta o segundo fator
+     * (nesse caso NINGUÉM foi autenticado ainda: a sessão só guarda um "pendente" de 10 minutos).
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): bool
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt([
+        // Valida sem criar sessão: quem tem segundo fator só entra depois do desafio, e uma senha certa
+        // sozinha não pode encerrar as sessões "lembrar de mim" da pessoa (o que logout() faria).
+        $provider = Auth::guard()->getProvider();
+        $credentials = [
             'email' => $this->string('email')->lower()->toString(),
-            'password' => $this->input('password'),
+            'password' => (string) $this->input('password'),
             'is_active' => true,
             'deleted_at' => null,
-        ], $this->boolean('remember'))) {
+        ];
+        $user = $provider->retrieveByCredentials($credentials);
+
+        if (! $user || ! $provider->validateCredentials($user, $credentials)) {
             $this->recordFailedAttempt();
 
             throw $this->loginFailure([
@@ -61,12 +69,10 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $user = Auth::user();
-        $isPlatformMaster = $user?->isPlatformMasterIdentity();
-        $invalidMasterRole = $user?->role === 'master' && ! $isPlatformMaster;
-        $inactiveCompany = ! $isPlatformMaster && (! $user?->company?->is_active || $user?->company?->deleted_at !== null);
-        if (! $user || $invalidMasterRole || $inactiveCompany) {
-            Auth::logout();
+        $isPlatformMaster = $user->isPlatformMasterIdentity();
+        $invalidMasterRole = $user->role === 'master' && ! $isPlatformMaster;
+        $inactiveCompany = ! $isPlatformMaster && (! $user->company?->is_active || $user->company?->deleted_at !== null);
+        if ($invalidMasterRole || $inactiveCompany) {
             $this->recordFailedAttempt();
 
             throw $this->loginFailure([
@@ -74,14 +80,33 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if ($isPlatformMaster && $user->role !== 'master') {
+        RateLimiter::clear($this->emailThrottleKey());
+
+        if ($user->hasTwoFactorEnabled()) {
+            $this->session()->put('two_factor.pending', [
+                'id' => $user->getKey(),
+                'remember' => $this->boolean('remember'),
+                'expires_at' => now()->addMinutes(10)->getTimestamp(),
+            ]);
+
+            return false;
+        }
+
+        Auth::login($user, $this->boolean('remember'));
+        $this->completeLogin($user);
+
+        return true;
+    }
+
+    /** Passos comuns a quem entra direto e a quem passou pelo desafio do segundo fator. */
+    public static function completeLogin(User $user): void
+    {
+        if ($user->isPlatformMasterIdentity() && $user->role !== 'master') {
             $user->role = 'master';
             $user->permissions = [];
         }
 
         $user->forceFill(['last_login_at' => now()])->save();
-
-        RateLimiter::clear($this->emailThrottleKey());
     }
 
     /**

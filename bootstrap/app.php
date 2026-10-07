@@ -5,6 +5,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequestCorrelation;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireRole;
+use App\Http\Middleware\RequireTwoFactorEnrollment;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetCurrentCompany;
 use App\Http\Middleware\TrustConfiguredProxies;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             AuditUserActivity::class,
+            RequireTwoFactorEnrollment::class,
         ]);
 
         $middleware->alias([

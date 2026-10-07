@@ -37,6 +37,7 @@ class Preflight extends Command
         $from = (string) config('mail.from.address');
         $check('Remetente real', $from !== '' && ! str_contains($from, 'example.com'), "MAIL_FROM_ADDRESS={$from}");
 
+        $check('2FA exigido de administradores e Master', (bool) config('security.two_factor_required'), 'TWO_FACTOR_REQUIRED='.(config('security.two_factor_required') ? 'true' : 'false'));
         $check('Cookie de sessão seguro', (bool) config('session.secure'), 'SESSION_SECURE_COOKIE');
         $check('Sessão criptografada', (bool) config('session.encrypt'), 'SESSION_ENCRYPT');
         $check('Banco de produção', config('database.default') !== 'sqlite', 'DB_CONNECTION='.config('database.default'), false);

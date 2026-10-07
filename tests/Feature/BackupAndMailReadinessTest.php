@@ -110,7 +110,7 @@ class BackupAndMailReadinessTest extends TestCase
         File::put($this->dir.'/last-success.json', json_encode(['finished_at' => now()->toIso8601String()]));
         config([
             'app.debug' => false, 'app.url' => 'https://trilha.example.org', 'mail.default' => 'smtp', 'mail.from.address' => 'no-reply@trilha.example.org',
-            'session.secure' => true, 'session.encrypt' => true,
+            'session.secure' => true, 'session.encrypt' => true, 'security.two_factor_required' => true,
         ]);
         $this->artisan('app:preflight')->assertSuccessful();
     }
@@ -120,7 +120,7 @@ class BackupAndMailReadinessTest extends TestCase
         $this->app['env'] = 'production';
         config([
             'app.debug' => false, 'app.url' => 'https://trilha.example.org', 'mail.default' => 'smtp', 'mail.from.address' => 'no-reply@trilha.example.org',
-            'session.secure' => true, 'session.encrypt' => true,
+            'session.secure' => true, 'session.encrypt' => true, 'security.two_factor_required' => true,
         ]);
         File::ensureDirectoryExists($this->dir);
         File::put($this->dir.'/last-success.json', json_encode(['finished_at' => now()->subDays(3)->toIso8601String()]));

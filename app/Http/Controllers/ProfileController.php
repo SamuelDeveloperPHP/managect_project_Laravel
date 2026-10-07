@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
+use App\Support\Auth\TwoFactor;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,22 @@ class ProfileController extends Controller
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request, TwoFactor $twoFactor): Response
     {
+        $user = $request->user();
+        // Ativação pela metade: o segredo existe, mas ainda não foi confirmado com um código do app.
+        $pending = $user->two_factor_secret !== null && ! $user->hasTwoFactorEnabled();
+
         return Inertia::render('Profile/Edit', [
+            'twoFactor' => [
+                'enabled' => $user->hasTwoFactorEnabled(),
+                'required' => $user->requiresTwoFactor(),
+                'recovery_codes_left' => $user->hasTwoFactorEnabled() ? count((array) $user->two_factor_recovery_codes) : 0,
+                'setup' => $pending ? [
+                    'qr_svg' => $twoFactor->qrCodeSvg($user, (string) $user->two_factor_secret),
+                    'secret' => trim(chunk_split((string) $user->two_factor_secret, 4, ' ')),
+                ] : null,
+            ],
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);

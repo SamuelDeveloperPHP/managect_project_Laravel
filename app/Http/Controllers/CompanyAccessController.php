@@ -25,7 +25,7 @@ class CompanyAccessController extends Controller
 
         return Inertia::render('Company/Users', [
             'users' => User::query()->where('company_id', $companyId)->orderBy('name')->get([
-                'id', 'name', 'email', 'cpf', 'role', 'permissions', 'is_active', 'last_login_at', 'created_at',
+                'id', 'name', 'email', 'cpf', 'role', 'permissions', 'is_active', 'last_login_at', 'created_at', 'two_factor_confirmed_at',
             ]),
             'permissionOptions' => self::PERMISSIONS,
             'companies' => $request->user()->hasRole('master') ? Company::query()->orderBy('name')->get(['id', 'name', 'document_type', 'document_number']) : [],
@@ -152,6 +152,41 @@ class CompanyAccessController extends Controller
         });
 
         return back()->with('success', 'Administração da empresa transferida.');
+    }
+
+    /**
+     * Perdeu o celular e os códigos de recuperação: o administrador (ou o Master) apaga o segundo fator do membro,
+     * que precisará ativar de novo no próximo acesso. Ninguém redefine o próprio (para isso há o artisan two-factor:reset).
+     */
+    public function resetTwoFactor(Request $request, int $user): RedirectResponse
+    {
+        $target = $this->target($request, $user);
+        $actor = $request->user();
+
+        if ($target->is($actor)) {
+            throw ValidationException::withMessages(['two_factor' => 'Você não pode redefinir o seu próprio segundo fator por aqui.']);
+        }
+        if ($target->role === 'master') {
+            throw ValidationException::withMessages(['two_factor' => 'O segundo fator do Master só é redefinido pelo servidor (php artisan two-factor:reset).']);
+        }
+        if ($target->role === 'admin' && ! $actor->hasRole('master')) {
+            throw ValidationException::withMessages(['two_factor' => 'Só o Master redefine o segundo fator do administrador da empresa.']);
+        }
+
+        $target->forceFill([
+            'two_factor_secret' => null, 'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null, 'two_factor_last_step' => null,
+        ])->save();
+
+        AuditLog::query()->create([
+            'user_id' => $actor->getKey(), 'company_id' => $target->company_id, 'action' => 'auth.two_factor_reset',
+            'entity_type' => 'users', 'entity_id' => $target->getKey(),
+            'description' => 'Segundo fator redefinido para '.$target->email, 'route_name' => $request->route()?->getName(),
+            'method' => $request->method(), 'path' => '/'.$request->path(), 'status_code' => 200, 'outcome' => 'success',
+            'ip_address' => $request->ip(), 'user_agent' => mb_substr((string) $request->userAgent(), 0, 255), 'created_at' => now(),
+        ]);
+
+        return back()->with('success', 'Segundo fator redefinido. A pessoa ativa de novo no próximo acesso.');
     }
 
     public function setActive(Request $request, int $user): RedirectResponse

@@ -45,6 +45,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -61,6 +63,10 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'deleted_at' => 'datetime',
+            // Segredo e códigos de recuperação nunca ficam em texto aberto no banco.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -103,6 +109,25 @@ class User extends Authenticatable
      * E-mail da ÚNICA conta Master da plataforma. O padrão serve para desenvolvimento; em produção defina
      * PLATFORM_MASTER_EMAIL com um e-mail real (a recuperação de senha precisa conseguir chegar à caixa de entrada).
      */
+    /** O segundo fator está ativo (o segredo foi gerado E confirmado com um código válido). */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
+    }
+
+    /** Este papel precisa ter o segundo fator ativo (config security.two_factor_required / two_factor_roles). */
+    public function requiresTwoFactor(): bool
+    {
+        return (bool) config('security.two_factor_required')
+            && in_array($this->role, (array) config('security.two_factor_roles'), true);
+    }
+
+    /** Falta ativar o segundo fator e o sistema exige isso. */
+    public function mustEnrollTwoFactor(): bool
+    {
+        return $this->requiresTwoFactor() && ! $this->hasTwoFactorEnabled();
+    }
+
     public static function platformMasterEmail(): string
     {
         return mb_strtolower(trim((string) config('platform.master_email', self::PLATFORM_MASTER_EMAIL)));
