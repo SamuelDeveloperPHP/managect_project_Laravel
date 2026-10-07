@@ -18,7 +18,10 @@ class GanttTask extends Model
             if (! $task->project_backlog_id) {
                 throw new \LogicException('Toda tarefa vinculada a um projeto deve pertencer a um backlog.');
             }
-            $backlog = ProjectBacklog::withoutGlobalScopes()->findOrFail($task->project_backlog_id);
+            // Quem grava muitas tarefas de uma vez (editor do Gantt) já carrega o backlog e o injeta na relação.
+            $backlog = $task->relationLoaded('backlog') && (int) $task->getRelation('backlog')?->id === (int) $task->project_backlog_id
+                ? $task->getRelation('backlog')
+                : ProjectBacklog::withoutGlobalScopes()->findOrFail($task->project_backlog_id);
             if ((int) $backlog->project_id !== (int) $task->project_id || (int) $backlog->company_id !== (int) $task->company_id) {
                 throw new \LogicException('A tarefa Gantt deve pertencer ao backlog e ao projeto correspondentes.');
             }
