@@ -41,7 +41,7 @@ class CompanyAccessController extends Controller
         ]);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', Rule::notIn([User::PLATFORM_MASTER_EMAIL]), 'unique:users,email'],
+            'email' => ['required', 'email', 'max:190', Rule::notIn([User::platformMasterEmail()]), 'unique:users,email'],
             'cpf' => ['nullable', 'string', 'size:11', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
                     $fail('Informe um CPF válido.');
@@ -87,7 +87,7 @@ class CompanyAccessController extends Controller
         ]);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', Rule::notIn([User::PLATFORM_MASTER_EMAIL]), Rule::unique('users', 'email')->ignore($target->id)],
+            'email' => ['required', 'email', 'max:190', Rule::notIn([User::platformMasterEmail()]), Rule::unique('users', 'email')->ignore($target->id)],
             'cpf' => ['nullable', 'string', 'size:11', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! BrazilianTaxDocument::isValid('CPF', (string) $value)) {
                     $fail('Informe um CPF válido.');

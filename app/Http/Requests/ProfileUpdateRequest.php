@@ -25,7 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 $this->user()->isPlatformMasterIdentity()
-                    ? Rule::in([User::PLATFORM_MASTER_EMAIL])
+                    ? Rule::in([User::platformMasterEmail()])
                     : Rule::unique(User::class)->ignore($this->user()->id),
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $secondary = $this->user()->role === 'admin' ? $this->user()->company?->secondary_recovery_email : null;

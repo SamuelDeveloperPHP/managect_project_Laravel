@@ -99,9 +99,18 @@ class User extends Authenticatable
         return in_array($role, $roles, true);
     }
 
+    /**
+     * E-mail da ÚNICA conta Master da plataforma. O padrão serve para desenvolvimento; em produção defina
+     * PLATFORM_MASTER_EMAIL com um e-mail real (a recuperação de senha precisa conseguir chegar à caixa de entrada).
+     */
+    public static function platformMasterEmail(): string
+    {
+        return mb_strtolower(trim((string) config('platform.master_email', self::PLATFORM_MASTER_EMAIL)));
+    }
+
     public function isPlatformMasterIdentity(): bool
     {
-        return mb_strtolower((string) $this->email) === self::PLATFORM_MASTER_EMAIL;
+        return mb_strtolower((string) $this->email) === self::platformMasterEmail();
     }
 
     protected static function booted(): void
@@ -112,7 +121,7 @@ class User extends Authenticatable
                     throw new \LogicException('A conta da plataforma deve manter o papel Master.');
                 }
 
-                $user->email = self::PLATFORM_MASTER_EMAIL;
+                $user->email = self::platformMasterEmail();
                 $user->company_id = self::PLATFORM_MASTER_COMPANY_ID;
                 $user->permissions = [];
 
@@ -120,7 +129,7 @@ class User extends Authenticatable
             }
 
             if ($user->role === 'master') {
-                throw new \LogicException('O papel Master é reservado à conta '.self::PLATFORM_MASTER_EMAIL.'.');
+                throw new \LogicException('O papel Master é reservado à conta '.self::platformMasterEmail().'.');
             }
         });
     }

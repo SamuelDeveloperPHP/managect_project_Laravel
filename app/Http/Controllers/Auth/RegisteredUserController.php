@@ -57,7 +57,7 @@ class RegisteredUserController extends Controller
                     $fail('Informe um CPF válido.');
                 }
             }, Rule::unique('users', 'cpf')],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:190', 'unique:'.User::class, Rule::notIn([User::PLATFORM_MASTER_EMAIL])],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:190', 'unique:'.User::class, Rule::notIn([User::platformMasterEmail()])],
             'secondary_recovery_email' => ['nullable', 'string', 'lowercase', 'email', 'max:190', 'different:email'],
             'password' => ['required', 'confirmed', Rules\Password::min(12)],
         ], [
