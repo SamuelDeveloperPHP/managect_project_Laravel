@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PrivacyController;
 use App\Models\Company;
 use App\Models\User;
 use App\Support\BrazilianTaxDocument;
@@ -60,7 +61,9 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:190', 'unique:'.User::class, Rule::notIn([User::platformMasterEmail()])],
             'secondary_recovery_email' => ['nullable', 'string', 'lowercase', 'email', 'max:190', 'different:email'],
             'password' => ['required', 'confirmed', Rules\Password::min(12)],
+            'accept_terms' => ['accepted'],
         ], [
+            'accept_terms.accepted' => 'Para fazer o cadastro, confirme que leu e aceita a Política de Privacidade e os Termos de Uso.',
             'secondary_recovery_email.different' => 'O e-mail de recuperação secundário deve ser diferente do e-mail do administrador.',
         ]);
 
@@ -95,6 +98,8 @@ class RegisteredUserController extends Controller
                 'is_active' => true,
             ]);
         });
+
+        PrivacyController::recordAcceptance($user, $request);
 
         event(new Registered($user));
 

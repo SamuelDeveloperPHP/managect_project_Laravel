@@ -67,6 +67,8 @@ class User extends Authenticatable
             'two_factor_secret' => 'encrypted',
             'two_factor_recovery_codes' => 'encrypted:array',
             'two_factor_confirmed_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 
@@ -125,6 +127,18 @@ class User extends Authenticatable
     public function mustEnrollTwoFactor(): bool
     {
         return $this->requiresTwoFactor() && ! $this->hasTwoFactorEnabled();
+    }
+
+    /** Já aceitou a versão vigente da Política de Privacidade e dos Termos de Uso. */
+    public function hasAcceptedCurrentTerms(): bool
+    {
+        return $this->terms_version === config('privacy.terms_version') && $this->terms_accepted_at !== null;
+    }
+
+    /** Falta aceitar os termos e o sistema exige isso. */
+    public function mustAcceptTerms(): bool
+    {
+        return (bool) config('privacy.terms_required') && ! $this->hasAcceptedCurrentTerms();
     }
 
     public static function platformMasterEmail(): string

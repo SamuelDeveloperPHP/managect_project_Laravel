@@ -33,6 +33,7 @@ export default function Register() {
         secondary_recovery_email: '',
         password: '',
         password_confirmation: '',
+        accept_terms: false,
     });
     const doc = documentConfig[data.document_type];
 
@@ -120,6 +121,14 @@ export default function Register() {
                     </div>
                     <p className="-mt-2 text-xs text-neutral-500">Use uma senha com pelo menos 12 caracteres.</p>
                 </section>
+
+                <div>
+                    <label className="flex cursor-pointer items-start gap-3 text-sm text-neutral-700">
+                        <input type="checkbox" name="accept_terms" checked={data.accept_terms} onChange={(event) => setData('accept_terms', event.target.checked)} required className="mt-0.5 h-5 w-5 shrink-0 rounded border-neutral-300 text-brand-700 focus:ring-brand-500" />
+                        <span>Li e aceito a <Link href={route('legal.privacy')} target="_blank" className={linkClass}>Política de Privacidade</Link> e os <Link href={route('legal.terms')} target="_blank" className={linkClass}>Termos de Uso</Link>.</span>
+                    </label>
+                    <InputError message={errors.accept_terms} className="mt-2" />
+                </div>
 
                 <button type="submit" disabled={processing} className={submitButtonClass}>
                     {processing ? 'Enviando cadastro…' : 'Fazer cadastro'}

@@ -172,7 +172,11 @@ export default function Welcome({ canRegister, auth }: WelcomeProps) {
                     <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-7 gap-y-3 px-5 sm:px-7">
                         <span className="flex items-center gap-2.5 font-display text-base font-extrabold tracking-tight text-neutral-900"><ApplicationLogo className="h-6 w-6" />Trilha+</span>
                         <span>© {new Date().getFullYear()} Trilha+ · Um produto NexoCore Tecnologia</span>
-                        <Link href={route('company.versions.index')} className="font-semibold text-brand-700 transition hover:text-brand-900 sm:ml-auto">Histórico de versões</Link>
+                        <nav aria-label="Documentos legais" className="flex gap-5 sm:ml-auto">
+                            <Link href={route('legal.privacy')} className="font-semibold text-brand-700 transition hover:text-brand-900">Privacidade</Link>
+                            <Link href={route('legal.terms')} className="font-semibold text-brand-700 transition hover:text-brand-900">Termos de Uso</Link>
+                            <Link href={route('company.versions.index')} className="font-semibold text-brand-700 transition hover:text-brand-900">Histórico de versões</Link>
+                        </nav>
                     </div>
                 </footer>
             </div>

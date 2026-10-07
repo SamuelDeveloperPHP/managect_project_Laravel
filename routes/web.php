@@ -5,6 +5,7 @@ use App\Http\Controllers\CompanyAccessController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\GanttTaskController;
 use App\Http\Controllers\MasterCompaniesController;
+use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectBacklogController;
 use App\Http\Controllers\ProjectController;
@@ -18,6 +19,16 @@ use Inertia\Inertia;
 Route::get('/', fn () => Inertia::render('Welcome', [
     'canRegister' => true,
 ]))->name('home');
+
+// LGPD: textos públicos (precisam abrir sem login) e ciência dos termos.
+Route::get('/privacidade', [PrivacyController::class, 'policy'])->name('legal.privacy');
+Route::get('/termos', [PrivacyController::class, 'terms'])->name('legal.terms');
+
+Route::middleware(['auth', 'company', 'throttle:authenticated-web'])->group(function () {
+    Route::get('/aceite-dos-termos', [PrivacyController::class, 'acceptPage'])->name('terms.accept');
+    Route::post('/aceite-dos-termos', [PrivacyController::class, 'accept'])->name('terms.accept.store');
+    Route::get('/profile/data-export', [PrivacyController::class, 'export'])->middleware('throttle:sensitive-account-action')->name('profile.data-export');
+});
 
 Route::get('/dashboard', AdminDashboardController::class)
     ->middleware(['auth', 'verified', 'company', 'throttle:authenticated-web'])
@@ -81,6 +92,8 @@ Route::prefix('company')->name('company.')->middleware(['auth', 'company', 'role
     Route::post('/users', [CompanyAccessController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [CompanyAccessController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/two-factor/reset', [CompanyAccessController::class, 'resetTwoFactor'])->middleware('throttle:sensitive-account-action')->name('users.two-factor.reset');
+    Route::get('/users/{user}/data-export', [CompanyAccessController::class, 'exportData'])->middleware('throttle:sensitive-account-action')->name('users.data-export');
+    Route::post('/users/{user}/anonymize', [CompanyAccessController::class, 'anonymize'])->middleware('throttle:sensitive-account-action')->name('users.anonymize');
     Route::post('/users/{user}/transfer-admin', [CompanyAccessController::class, 'transferAdmin'])->middleware('throttle:sensitive-account-action')->name('users.transfer-admin');
     Route::patch('/users/{user}/status', [CompanyAccessController::class, 'setActive'])->name('users.status');
     Route::get('/audit', [CompanyAccessController::class, 'audit'])->name('audit.index');

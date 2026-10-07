@@ -6,8 +6,11 @@ use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\User;
 use App\Support\BrazilianTaxDocument;
+use App\Support\Privacy\UserAnonymizer;
+use App\Support\Privacy\UserDataExport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -187,6 +190,33 @@ class CompanyAccessController extends Controller
         ]);
 
         return back()->with('success', 'Segundo fator redefinido. A pessoa ativa de novo no próximo acesso.');
+    }
+
+    /** LGPD: o titular pediu os próprios dados e quem atende o pedido é o administrador da empresa. */
+    public function exportData(Request $request, int $user, UserDataExport $export): HttpResponse
+    {
+        return PrivacyController::download($request, $this->target($request, $user), $request->user(), $export);
+    }
+
+    /**
+     * LGPD: apaga os dados pessoais de um membro (ex.: pessoa que saiu da empresa e pediu a eliminação).
+     * O administrador não anonimiza a si mesmo (usa o Perfil) nem outro administrador (transfira a administração antes).
+     */
+    public function anonymize(Request $request, int $user, UserAnonymizer $anonymizer): RedirectResponse
+    {
+        $request->validate(['password' => ['required', 'current_password']]);
+        $target = $this->target($request, $user);
+
+        if ($target->is($request->user())) {
+            throw ValidationException::withMessages(['password' => 'Para apagar os seus próprios dados, use o Perfil.']);
+        }
+        if ($target->role === 'admin') {
+            throw ValidationException::withMessages(['password' => 'Transfira a administração da empresa antes de apagar os dados do administrador.']);
+        }
+
+        $anonymizer->anonymize($target, $request->user(), 'solicitação ao administrador');
+
+        return back()->with('success', 'Dados pessoais apagados. O histórico do projeto foi mantido sem identificar a pessoa.');
     }
 
     public function setActive(Request $request, int $user): RedirectResponse

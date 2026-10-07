@@ -111,6 +111,8 @@ class BackupAndMailReadinessTest extends TestCase
         config([
             'app.debug' => false, 'app.url' => 'https://trilha.example.org', 'mail.default' => 'smtp', 'mail.from.address' => 'no-reply@trilha.example.org',
             'session.secure' => true, 'session.encrypt' => true, 'security.two_factor_required' => true,
+            'backup.encryption_key' => 'base64:'.base64_encode(str_repeat('k', 32)),
+            'privacy.terms_required' => true, 'privacy.contact_email' => 'privacidade@trilha.example.org', 'privacy.policy_reviewed' => true,
         ]);
         $this->artisan('app:preflight')->assertSuccessful();
     }

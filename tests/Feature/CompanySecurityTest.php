@@ -282,7 +282,7 @@ class CompanySecurityTest extends TestCase
 
     public function test_company_first_registration_is_admin_and_audit_keeps_only_changed_field_names(): void
     {
-        $this->post('/register', [
+        $this->post('/register', ['accept_terms' => true,
             'name' => 'Responsável',
             'company_name' => 'Empresa CPF',
             'company_cnpj' => '11.222.333/0001-81',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
 use App\Support\Auth\TwoFactor;
+use App\Support\Privacy\UserAnonymizer;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class ProfileController extends Controller
         $pending = $user->two_factor_secret !== null && ! $user->hasTwoFactorEnabled();
 
         return Inertia::render('Profile/Edit', [
+            'privacy' => ['terms_version' => $user->terms_version, 'terms_accepted_at' => $user->terms_accepted_at?->toIso8601String()],
             'twoFactor' => [
                 'enabled' => $user->hasTwoFactorEnabled(),
                 'required' => $user->requiresTwoFactor(),
@@ -86,7 +88,7 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, UserAnonymizer $anonymizer): RedirectResponse
     {
         $request->validate([
             'password' => ['required', 'current_password'],
@@ -107,7 +109,8 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->forceFill(['is_active' => false])->delete();
+        // Apaga os dados pessoais (nome, e-mail, CPF, foto, sessões, vínculos); o histórico do projeto fica sem identificar a pessoa.
+        $anonymizer->anonymize($user, $user, 'titular');
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

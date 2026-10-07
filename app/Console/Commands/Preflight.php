@@ -43,6 +43,10 @@ class Preflight extends Command
         $check('Banco de produção', config('database.default') !== 'sqlite', 'DB_CONNECTION='.config('database.default'), false);
         $check('Link storage', is_link(public_path('storage')) || is_dir(public_path('storage')), 'php artisan storage:link', false);
 
+        $check('Aceite dos termos exigido (LGPD)', (bool) config('privacy.terms_required'), 'PRIVACY_TERMS_REQUIRED='.(config('privacy.terms_required') ? 'true' : 'false'));
+        $check('E-mail de contato do titular (LGPD)', filled(config('privacy.contact_email')), 'PRIVACY_CONTACT_EMAIL (aparece na Política de Privacidade)');
+        $check('Política de Privacidade revisada por advogado/DPO', (bool) config('privacy.policy_reviewed'), 'PRIVACY_POLICY_REVIEWED=true só depois da revisão');
+
         $this->backupChecks($check);
 
         $this->table(['Resultado', 'Verificação', 'Detalhe'], $rows);
@@ -72,7 +76,7 @@ class Preflight extends Command
         $verify = is_file(dirname($marker).DIRECTORY_SEPARATOR.'last-verify.json') ? json_decode((string) File::get(dirname($marker).DIRECTORY_SEPARATOR.'last-verify.json'), true) : null;
         $verified = isset($verify['verified_at']) ? CarbonCarbon::parse($verify['verified_at']) : null;
         $check('Backup verificado na última semana', $verified !== null && $verified->gt(now()->subDays(8)), $verified ? 'última verificação: '.$verified->format('d/m/Y H:i') : 'rode php artisan backup:verify', false);
-        $check('Backup criptografado', (string) config('backup.encryption_key') !== '', config('backup.encryption_key') ? 'BACKUP_ENCRYPTION_KEY definida' : 'sem BACKUP_ENCRYPTION_KEY: o backup contém dados pessoais em texto aberto', false);
+        $check('Backup criptografado', (string) config('backup.encryption_key') !== '', config('backup.encryption_key') ? 'BACKUP_ENCRYPTION_KEY definida' : 'sem BACKUP_ENCRYPTION_KEY: o backup contém dados pessoais em texto aberto (a Política de Privacidade promete cópias criptografadas)');
         $check('Cópia externa do backup', (bool) config('backup.copy_disk'), config('backup.copy_disk') ? 'disco: '.config('backup.copy_disk') : 'BACKUP_COPY_DISK vazio: backup só neste servidor', false);
     }
 }
