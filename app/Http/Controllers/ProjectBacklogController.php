@@ -25,13 +25,14 @@ class ProjectBacklogController extends Controller
         return Inertia::render('Projects/Backlogs', [
             'project' => $project->only('id', 'name', 'code', 'description', 'status'),
             'backlogs' => $backlogs,
-            'canManage' => request()->user()->hasPermission('can_manage_projects'),
+            'canManage' => $project->canBeManagedBy(request()->user()),
         ]);
     }
 
     public function store(Request $request, int $project): RedirectResponse
     {
         $project = Project::query()->findOrFail($project);
+        $this->authorizeProjectManagement($project);
         $data = $request->validate([
             'code' => ['nullable', 'string', 'max:40', Rule::unique('project_backlogs')->where('company_id', $project->company_id)->where('project_id', $project->id)],
             'name' => ['required', 'string', 'max:160'],
@@ -64,6 +65,7 @@ class ProjectBacklogController extends Controller
         return Inertia::render('Projects/Backlog', [
             'project' => $project->only('id', 'name', 'code', 'description', 'status'),
             'backlog' => $backlog->only('id', 'code', 'name', 'description', 'status', 'items_count', 'tasks_count'),
+            'canManage' => $project->canBeManagedBy(request()->user()),
             'items' => $backlog->items()->with(['ganttTasks' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')])->orderBy('priority')->orderBy('code')->get(['id', 'project_id', 'project_backlog_id', 'code', 'epic', 'title', 'description', 'priority', 'status', 'release', 'points']),
         ]);
     }
@@ -71,6 +73,7 @@ class ProjectBacklogController extends Controller
     public function storeItem(Request $request, int $project, int $backlog): RedirectResponse
     {
         $project = Project::query()->findOrFail($project);
+        $this->authorizeProjectManagement($project);
         $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
         $data = $request->validate([
             'code' => ['required', 'string', 'max:32', Rule::unique('project_backlog_items')->where('company_id', $project->company_id)->where('project_id', $project->id)],
@@ -90,6 +93,7 @@ class ProjectBacklogController extends Controller
     public function updateStatus(Request $request, int $project, int $backlog, int $item): RedirectResponse
     {
         $project = Project::query()->findOrFail($project);
+        $this->authorizeProjectManagement($project);
         $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
         $item = ProjectBacklogItem::query()->where('project_backlog_id', $backlog->id)->findOrFail($item);
 
@@ -102,6 +106,7 @@ class ProjectBacklogController extends Controller
     public function syncGanttTasks(Request $request, int $project, int $backlog, int $item): RedirectResponse
     {
         $project = Project::query()->findOrFail($project);
+        $this->authorizeProjectManagement($project);
         $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
         $item = ProjectBacklogItem::query()->where('project_backlog_id', $backlog->id)->findOrFail($item);
         $data = $request->validate(['task_ids' => ['present', 'array', 'max:500'], 'task_ids.*' => ['required', 'integer', 'distinct']]);

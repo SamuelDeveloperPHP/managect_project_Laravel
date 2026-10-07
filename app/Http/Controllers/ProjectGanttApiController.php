@@ -31,6 +31,7 @@ class ProjectGanttApiController extends Controller
     public function save(Request $request, int $project, int $backlog): JsonResponse
     {
         $project = Project::query()->findOrFail($project);
+        $this->authorizeProjectManagement($project);
         $backlog = ProjectBacklog::query()->where('project_id', $project->id)->findOrFail($backlog);
         if (strlen($request->getContent()) > 1_048_576) {
             return response()->json(['success' => false, 'message' => 'O arquivo enviado excede o limite de 1 MB.'], 413);
@@ -309,7 +310,7 @@ class ProjectGanttApiController extends Controller
 
     private function projectPayload(Project $project, ProjectBacklog $backlog): array
     {
-        $canWrite = request()->user()->hasPermission('can_manage_projects');
+        $canWrite = $project->canBeManagedBy(request()->user());
         $tasks = GanttTask::query()->where('project_backlog_id', $backlog->id)
             ->with(['assignments' => fn ($query) => $query->where('company_id', $project->company_id)->whereHas('user', fn ($users) => $users->where('company_id', $project->company_id))])
             ->orderBy('sort_order')->orderBy('id')->get();

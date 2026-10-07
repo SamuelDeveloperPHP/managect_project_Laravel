@@ -9,7 +9,7 @@ type BacklogData = { id: number; code: string; name: string; description: string
 const statuses: Record<string, string> = { pending: 'Pendente', in_progress: 'Em andamento', validation: 'Em validação', done: 'Concluído' };
 const priorityTone: Record<string, string> = { P0: 'bg-rose-50 text-rose-700 ring-rose-200', P1: 'bg-amber-50 text-amber-800 ring-amber-200', P2: 'bg-sky-50 text-sky-700 ring-sky-200', P3: 'bg-neutral-100 text-neutral-600 ring-neutral-200' };
 
-export default function Backlog({ project, backlog, items }: { project: Project; backlog: BacklogData; items: Item[] }) {
+export default function Backlog({ project, backlog, items, canManage = false }: { project: Project; backlog: BacklogData; items: Item[]; canManage?: boolean }) {
     const [showForm, setShowForm] = useState(false);
     const [filter, setFilter] = useState('all');
     const { data, setData, post, processing, errors, reset } = useForm({ code: '', epic: '', title: '', description: '', priority: 'P1', release: 'R1', points: '' });
@@ -21,7 +21,7 @@ export default function Backlog({ project, backlog, items }: { project: Project;
 
     const actions = (
         <>
-            <button type="button" onClick={() => setShowForm(!showForm)} aria-expanded={showForm} className={btnSecondary}>{showForm ? 'Fechar' : 'Adicionar item'}</button>
+            {canManage && <button type="button" onClick={() => setShowForm(!showForm)} aria-expanded={showForm} className={btnSecondary}>{showForm ? 'Fechar' : 'Adicionar item'}</button>}
             <Link href={route('projects.timeline.index', [project.id, backlog.id])} className={btnPrimary}>Abrir Gantt</Link>
         </>
     );
@@ -44,7 +44,7 @@ export default function Backlog({ project, backlog, items }: { project: Project;
                     </div>
                 </section>
 
-                {showForm && (
+                {canManage && showForm && (
                     <form onSubmit={submit} className={`${panelClass} grid gap-5 p-6 md:grid-cols-3`}>
                         <label className="text-sm font-semibold text-neutral-700">Código
                             <input value={data.code} onChange={(e) => setData('code', e.target.value.toUpperCase())} placeholder="BL-01-01" className={fieldClass} required />
@@ -99,7 +99,7 @@ export default function Backlog({ project, backlog, items }: { project: Project;
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <span className="rounded-lg bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600">{item.release || 'Sem release'}</span>
-                                    <select value={item.status} onChange={(event) => changeStatus(item, event.target.value)} className="min-h-10 rounded-xl border-neutral-300 pr-9 text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15" aria-label={`Status de ${item.title}`}>
+                                    <select value={item.status} disabled={!canManage} onChange={(event) => changeStatus(item, event.target.value)} className="min-h-10 rounded-xl border-neutral-300 pr-9 text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15" aria-label={`Status de ${item.title}`}>
                                         {Object.entries(statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                 </div>

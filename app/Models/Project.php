@@ -57,6 +57,30 @@ class Project extends Model
         return $this->belongsTo(User::class, 'leader_id');
     }
 
+    /**
+     * Quem pode alterar este projeto (dados, backlogs, itens e Gantt): administradores e Master sempre; os demais
+     * precisam da permissão can_manage_projects E de participação no projeto (líder, membro ou quem o criou).
+     * A leitura continua liberada a toda a empresa.
+     */
+    public function canBeManagedBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole('master', 'admin')) {
+            return true;
+        }
+
+        if (! $user->hasPermission('can_manage_projects')) {
+            return false;
+        }
+
+        return (int) $this->leader_id === (int) $user->getKey()
+            || (int) $this->created_by === (int) $user->getKey()
+            || $this->members()->whereKey($user->getKey())->exists();
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(ProjectAttachment::class);
