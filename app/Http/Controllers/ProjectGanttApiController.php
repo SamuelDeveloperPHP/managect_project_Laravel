@@ -8,7 +8,9 @@ use App\Models\Project;
 use App\Models\ProjectBacklogItem;
 use App\Models\ProjectBacklog;
 use App\Models\User;
+use App\Support\Gantt\TaskInput;
 use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +19,7 @@ use Illuminate\Validation\Rule;
 
 class ProjectGanttApiController extends Controller
 {
-    private const STATUSES = ['STATUS_ACTIVE', 'STATUS_DONE', 'STATUS_WAITING', 'STATUS_SUSPENDED', 'STATUS_FAILED', 'STATUS_UNDEFINED'];
-    private const ROLES = ['responsible' => 'Responsável', 'supporter' => 'Apoiador', 'reviewer' => 'Revisor'];
+    private const ROLES = TaskInput::ROLES;
 
     public function show(int $project, int $backlog): JsonResponse
     {
@@ -48,57 +49,35 @@ class ProjectGanttApiController extends Controller
             }
         }
 
-        $validator = Validator::make($payload, [
+        $header = Validator::make($payload, [
             'revision' => ['required', 'integer', 'min:0'],
             'tasks' => ['present', 'array', 'max:500'],
-            'tasks.*.id' => ['nullable', 'integer'],
-            'tasks.*.name' => ['nullable', 'string', 'max:190'],
-            'tasks.*.code' => ['nullable', 'string', 'max:80'],
-            'tasks.*.description' => ['nullable', 'string', 'max:4000'],
-            'tasks.*.level' => ['nullable', 'integer', 'between:0,20'],
-            'tasks.*.status' => ['nullable', Rule::in(self::STATUSES)],
-            'tasks.*.progress' => ['nullable', 'integer', 'between:0,100'],
-            'tasks.*.start' => ['required', 'numeric', 'min:0'],
-            'tasks.*.end' => ['required', 'numeric', 'min:0'],
-            'tasks.*.duration' => ['nullable', 'integer', 'between:1,3650'],
-            'tasks.*.depends' => ['nullable', 'string', 'max:255'],
-            'tasks.*.backlogItemId' => ['nullable', 'integer'],
-            'tasks.*.collapsed' => ['nullable', 'boolean'],
-            'tasks.*.startIsMilestone' => ['nullable', 'boolean'],
-            'tasks.*.endIsMilestone' => ['nullable', 'boolean'],
-            'tasks.*.assigs' => ['nullable', 'array', 'max:20'],
-            'tasks.*.assigs.*.resourceId' => ['required_with:tasks.*.assigs', 'integer'],
-            'tasks.*.assigs.*.roleId' => ['required_with:tasks.*.assigs', 'string', Rule::in(array_keys(self::ROLES))],
-            'tasks.*.assigs.*.effort' => ['nullable', 'integer', 'between:0,31536000000'],
         ], [
-            'tasks.*.id.integer' => 'Identificador de tarefa inválido.',
-            'tasks.*.level.*' => 'O nível da tarefa é inválido.',
-            'tasks.*.progress.*' => 'O progresso deve ser um número inteiro entre 0 e 100.',
-            'tasks.*.start.*' => 'A data inicial de uma tarefa é inválida.',
-            'tasks.*.end.*' => 'A data final de uma tarefa é inválida.',
-            'tasks.*.duration.*' => 'A duração deve ser de 1 a 3650 dias.',
-            'tasks.*.name.max' => 'O nome da tarefa pode ter no máximo 190 caracteres.',
-            'tasks.*.code.max' => 'O código da tarefa pode ter no máximo 80 caracteres.',
-            'tasks.*.assigs.*' => 'Um responsável da tarefa é inválido.',
-            'tasks.*.status.*' => 'O status da tarefa é inválido.',
-            'tasks.*.depends.*' => 'A lista de predecessoras é inválida.',
-            'tasks.*.backlogItemId.*' => 'O vínculo com o item do backlog é inválido.',
             'revision.*' => 'A página do cronograma está desatualizada. Recarregue-a e tente salvar de novo.',
             'tasks.max' => 'O cronograma aceita no máximo 500 tarefas.',
             'tasks.*' => 'Os dados do cronograma são inválidos.',
         ]);
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        if ($header->fails()) {
+            return response()->json(['success' => false, 'message' => $header->errors()->first()], 422);
         }
 
-        $tasks = array_values($validator->validated()['tasks']);
+        // Validação enxuta e equivalente à do Laravel (ver TaskInput): o validador padrão custava ~1 s para 350 tarefas.
+        $tasks = [];
+        foreach (array_values($payload['tasks']) as $rawTask) {
+            [$clean, $error] = TaskInput::check($rawTask);
+            if ($error !== null) {
+                return response()->json(['success' => false, 'message' => $error], 422);
+            }
+            $tasks[] = $clean;
+        }
+        $expectedRevision = (int) $header->validated()['revision'];
         $companyId = (int) $project->company_id;
         $backlogItemIds = collect($tasks)->pluck('backlogItemId')->filter()->map(fn ($id) => (int) $id)->unique();
         $validBacklogItemIds = ProjectBacklogItem::query()->where('project_backlog_id', $backlog->id)->whereIn('id', $backlogItemIds)->pluck('id')->map(fn ($id) => (int) $id);
         if ($backlogItemIds->diff($validBacklogItemIds)->isNotEmpty()) {
             return response()->json(['success' => false, 'message' => 'Um item de backlog vinculado não pertence a este projeto.'], 422);
         }
-        $existing = GanttTask::query()->where('project_backlog_id', $backlog->id)->get()->keyBy('id');
+        $existing = GanttTask::query()->where('project_backlog_id', $backlog->id)->with('assignments')->get()->keyBy('id');
         $activeUsers = User::query()->where('company_id', $companyId)->where('is_active', true)
             ->whereIn('id', collect($tasks)->flatMap(fn (array $task) => collect($task['assigs'] ?? [])->pluck('resourceId'))->unique())
             ->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -116,8 +95,6 @@ class ProjectGanttApiController extends Controller
                 }
             }
 
-            $expectedRevision = (int) $validator->validated()['revision'];
-
             DB::transaction(function () use ($prepared, $existing, $project, $backlog, $companyId, $request, $expectedRevision): void {
                 // Trava a linha do backlog: duas gravações simultâneas passam uma de cada vez.
                 $current = ProjectBacklog::query()->whereKey($backlog->id)->lockForUpdate()->firstOrFail();
@@ -133,7 +110,7 @@ class ProjectGanttApiController extends Controller
                     }
 
                     $record = $taskId > 0 ? $existing->get($taskId) : new GanttTask();
-                    $record->fill([
+                    $attributes = [
                         'project_id' => $project->id,
                         'project_backlog_id' => $backlog->id,
                         'company_id' => $companyId,
@@ -151,24 +128,32 @@ class ProjectGanttApiController extends Controller
                         'collapsed' => (bool) ($task['collapsed'] ?? false),
                         'start_is_milestone' => (bool) ($task['startIsMilestone'] ?? false),
                         'end_is_milestone' => (bool) ($task['endIsMilestone'] ?? false),
-                        'updated_by' => $request->user()->id,
-                    ]);
+                    ];
                     if (array_key_exists('backlogItemId', $task)) {
-                        $record->project_backlog_item_id = $task['backlogItemId'] ? (int) $task['backlogItemId'] : null;
+                        $attributes['project_backlog_item_id'] = $task['backlogItemId'] ? (int) $task['backlogItemId'] : null;
                     }
-                    if (! $taskId) $record->created_by = $request->user()->id;
+
+                    // Caminho rápido: tarefa existente que não mudou não passa pelo Eloquent (a maioria dos salvamentos).
+                    if ($taskId > 0 && $this->isUnchanged($record, $attributes)) {
+                        $retainedIds[] = $record->id;
+                        $this->syncAssignments($record, $task['assigs'] ?? [], $companyId, false);
+                        continue;
+                    }
+
+                    $record->fill($attributes);
+                    // Só toca o banco (e o "atualizado por") quando a tarefa realmente mudou.
+                    $isNew = ! $record->exists;
+                    if ($isNew) {
+                        $record->created_by = $request->user()->id;
+                    }
+                    if ($isNew || $record->isDirty()) {
+                        $record->updated_by = $request->user()->id;
+                    }
+                    $record->setRelation('backlog', $backlog); // evita reconsultar o backlog no hook de validação do model
                     $record->save();
                     $retainedIds[] = $record->id;
 
-                    $record->assignments()->delete();
-                    foreach ($task['assigs'] ?? [] as $assignment) {
-                        $record->assignments()->create([
-                            'company_id' => $companyId,
-                            'user_id' => (int) $assignment['resourceId'],
-                            'role' => $assignment['roleId'],
-                            'effort' => max(0, min(31_536_000_000, (int) ($assignment['effort'] ?? 0))),
-                        ]);
-                    }
+                    $this->syncAssignments($record, $task['assigs'] ?? [], $companyId, $isNew);
                 }
 
                 GanttTask::query()->where('project_backlog_id', $backlog->id)->whereNotIn('id', $retainedIds)->delete();
@@ -256,6 +241,64 @@ class ProjectGanttApiController extends Controller
             if ($visit($node)) {
                 throw new \RuntimeException('As predecessoras formam um ciclo (uma tarefa depende dela mesma). Remova o vínculo circular e salve de novo.');
             }
+        }
+    }
+
+    /** Compara os valores brutos do banco com os desejados, sem instanciar casts nem eventos do Eloquent. */
+    private function isUnchanged(GanttTask $record, array $attributes): bool
+    {
+        $stored = $record->getRawOriginal();
+
+        foreach ($attributes as $key => $wanted) {
+            if ($wanted instanceof DateTimeInterface) {
+                $wanted = $wanted->format('Y-m-d H:i:s');
+            } elseif (is_bool($wanted)) {
+                $wanted = (int) $wanted;
+            }
+
+            $current = $stored[$key] ?? null;
+            if ($current === null || $wanted === null) {
+                if ($current !== $wanted) {
+                    return false;
+                }
+                continue;
+            }
+            if ((string) $current !== (string) $wanted) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Recria as atribuições apenas se mudaram (a maioria dos salvamentos não mexe nelas). */
+    private function syncAssignments(GanttTask $record, array $assigs, int $companyId, bool $isNew): void
+    {
+        if ($assigs === [] && ($isNew || $record->assignments->isEmpty())) {
+            return; // caso mais comum: sem responsáveis antes nem depois
+        }
+
+        $wanted = collect($assigs)->map(fn (array $a) => [
+            'user_id' => (int) $a['resourceId'],
+            'role' => $a['roleId'],
+            'effort' => max(0, min(31_536_000_000, (int) ($a['effort'] ?? 0))),
+        ])->sortBy(['user_id', 'role'])->values()->all();
+
+        if ($isNew && $wanted === []) {
+            return; // tarefa nova sem responsáveis: nada para apagar nem criar
+        }
+
+        $current = $isNew ? [] : $record->assignments
+            ->map(fn ($a) => ['user_id' => (int) $a->user_id, 'role' => $a->role, 'effort' => (int) $a->effort])
+            ->sortBy(['user_id', 'role'])->values()->all();
+
+        if ($current === $wanted) {
+            return;
+        }
+
+        $record->assignments()->delete();
+        foreach ($wanted as $assignment) {
+            $record->assignments()->create(['company_id' => $companyId] + $assignment);
         }
     }
 
