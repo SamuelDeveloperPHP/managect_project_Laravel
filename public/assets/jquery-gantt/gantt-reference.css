@@ -172,6 +172,11 @@
   text-transform: none;
 }
 
+/* O gantt.css do plugin força 14px em todo th (mais específico que a regra acima). O cabeçalho usa o mesmo tamanho do texto das tarefas. */
+.gdfTable th.gdfColHeader {
+  font-size: 13px;
+}
+
 .gdfColHeader,
 .gdfCell {
   text-overflow: ellipsis;
