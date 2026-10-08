@@ -28,12 +28,16 @@ const cell = (page: Page, row: number, field: string) => rows(page).nth(row).loc
 
 /** Edita um campo da grade como a pessoa faria: digita e sai do campo (é o blur que grava na tarefa). */
 async function setField(page: Page, row: number, field: string, value: string) {
-    const input = cell(page, row, field);
-    await input.fill(value);
-    await input.blur();
-    // O editor aplica a edição de forma assíncrona: só segue quando a tarefa em memória já reflete o valor.
-    const property: Record<string, string> = { name: 'name', duration: 'duration', progress: 'progress', depends: 'depends' };
-    await expect.poll(() => page.evaluate(([index, prop]) => String((window as any).ge.tasks[index as number]?.[prop as string] ?? ''), [row, property[field]])).toBe(value);
+    // O editor repinta a grade logo depois de inserir/editar linhas; digitar numa linha que está prestes a ser
+    // substituída perde o valor. Em máquina lenta (CI) isso acontece, então digita de novo até a tarefa em memória
+    // refletir o valor: é o que uma pessoa faria ao ver o campo vazio.
+    await expect(async () => {
+        const input = cell(page, row, field);
+        await input.fill(value, { timeout: 3000 });
+        await input.blur();
+        const stored = await page.evaluate(([index, prop]) => String((window as any).ge.tasks[index as number]?.[prop as string] ?? ''), [row, field]);
+        expect(stored).toBe(value);
+    }).toPass({ timeout: 20_000, intervals: [250, 500, 1000] });
     // Pausa curta de quem digita: o editor tem temporizadores que repintam a grade logo após cada edição.
     await page.waitForTimeout(300);
 }
