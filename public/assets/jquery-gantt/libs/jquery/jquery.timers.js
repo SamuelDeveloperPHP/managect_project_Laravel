@@ -129,7 +129,8 @@ jQuery.extend({
 	}
 });
 
-	jQuery(window).one("unload", function() {
+	// "unload" está sendo bloqueado pelos navegadores (Permissions policy violation); "pagehide" faz a mesma limpeza.
+	jQuery(window).one("pagehide", function() {
 		var global = jQuery.timer.global;
 		for ( var label in global ) {
 			var els = global[label], i = els.length;
