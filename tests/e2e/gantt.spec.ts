@@ -80,6 +80,28 @@ test.beforeEach(async ({ page }) => {
     page.on('pageerror', (error) => { throw new Error(`Erro de JavaScript na página: ${error.message}`); });
 });
 
+test('o Gantt não registra o evento "unload" (os navegadores bloqueiam e o console mostra erro)', async ({ page }) => {
+    // Registra todo tipo de evento que os scripts penduram em window/document, antes de qualquer script rodar.
+    await page.addInitScript(() => {
+        const seen: string[] = [];
+        (window as any).__listenerTypes = seen;
+        const original = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function (this: EventTarget, type: string, ...rest: [any, any?]) {
+            if (this === window || this === document) seen.push(type);
+            return original.call(this, type, ...rest);
+        } as typeof original;
+    });
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+
+    await login(page, ADMIN);
+    await openGantt(page);
+
+    const types: string[] = await page.evaluate(() => (window as any).__listenerTypes);
+    expect(types).not.toContain('unload');
+    expect(consoleErrors.filter((text) => /permissions policy|unload/i.test(text))).toEqual([]);
+});
+
 test('o administrador cria tarefas, salva e elas continuam depois de recarregar', async ({ page }) => {
     await login(page, ADMIN);
     await openGantt(page);
