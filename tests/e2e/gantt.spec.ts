@@ -106,6 +106,31 @@ test('o Gantt não registra o evento "unload" (os navegadores bloqueiam e o cons
     expect(consoleErrors.filter((text) => /permissions policy|unload/i.test(text))).toEqual([]);
 });
 
+test('a tabela: cabeçalho com a mesma fonte das tarefas e coluna de % larga o bastante', async ({ page }) => {
+    await login(page, ADMIN);
+    await openGantt(page);
+
+    const sizes = await page.evaluate(() => {
+        const row = document.querySelector('tr.taskEditRow:not(.emptyRow)')!;
+        const header = (label: string) => [...document.querySelectorAll('th.gdfColHeader')].find((h) => (h.textContent || '').trim() === label)!;
+        const percent = row.querySelector('input[name=progress]') as HTMLInputElement;
+        return {
+            headerFont: getComputedStyle(header('Tarefa')).fontSize,
+            taskFont: getComputedStyle(row.querySelector('input[name=name]')!).fontSize,
+            percentColumn: Math.round(header('%').getBoundingClientRect().width),
+            percentInput: Math.round(percent.getBoundingClientRect().width),
+        };
+    });
+    expect(sizes.headerFont, 'o cabeçalho deve ter o tamanho da fonte das tarefas').toBe(sizes.taskFont);
+    expect(sizes.percentColumn).toBeGreaterThanOrEqual(48);
+    expect(sizes.percentInput, 'o campo precisa caber "100" sem cortar').toBeGreaterThanOrEqual(30);
+
+    // Na prática: digitar 100 e ver o valor inteiro no campo.
+    await setField(page, 0, 'progress', '100');
+    const clipped = await cell(page, 0, 'progress').evaluate((input: HTMLInputElement) => input.scrollWidth > input.clientWidth);
+    expect(clipped, 'o valor 100 não pode ficar cortado').toBe(false);
+});
+
 test('o administrador cria tarefas, salva e elas continuam depois de recarregar', async ({ page }) => {
     await login(page, ADMIN);
     await openGantt(page);
