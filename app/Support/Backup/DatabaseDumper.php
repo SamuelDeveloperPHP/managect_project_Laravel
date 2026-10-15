@@ -96,6 +96,11 @@ class DatabaseDumper
             return false; // já dentro de uma transação do chamador (ex.: testes): ela já fornece o isolamento
         }
 
+        if ($driver !== 'sqlite') {
+            // O snapshot exige REPEATABLE READ, independentemente do padrão da hospedagem.
+            $pdo->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+        }
+
         $pdo->exec($driver === 'sqlite' ? 'BEGIN' : 'START TRANSACTION WITH CONSISTENT SNAPSHOT');
 
         return true;
