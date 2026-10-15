@@ -8,11 +8,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Quando o segundo fator é exigido (todos os usuários) e a pessoa ainda não o ativou só alcança a tela de
- * ativação (no Perfil) e o logout. Todo o resto redireciona para lá (ou responde 403 em chamadas de API).
+ * ativação (no Perfil), os termos e o logout. Todo o resto redireciona para lá (ou responde 403 em chamadas de API).
  */
 class RequireTwoFactorEnrollment
 {
-    private const ALLOWED_ROUTES = ['profile.edit', 'two-factor.*', 'logout'];
+    // O aceite vem antes do cadastro do segundo fator; ambos podem estar pendentes no primeiro acesso.
+    private const ALLOWED_ROUTES = ['profile.edit', 'two-factor.*', 'terms.accept', 'terms.accept.store', 'legal.*', 'logout'];
 
     public function handle(Request $request, Closure $next): Response
     {
